@@ -3,7 +3,7 @@ Contains the ContainerImageConfig class, which specifies the runtime
 configuration for a container image.
 """
 
-from typing import Dict, Any, Tuple, Type, Union
+from typing import Dict, Any, Tuple, Type, Union, List
 from jsonschema import validate, ValidationError
 from image.configschema import CONTAINER_IMAGE_CONFIG_SCHEMA
 from image.platform import ContainerImagePlatform
@@ -106,3 +106,49 @@ class ContainerImageConfig:
         if variant != None:
             platform_dict["variant"] = variant
         return ContainerImagePlatform(platform_dict)
+    
+    def get_labels(self) -> Dict[str, str]:
+        """
+        Returns the container image labels from the config
+
+        Returns:
+            Dict[str, str]: The labels from the config
+        """
+        return self.config.get("Labels", {})
+
+    def get_created_date(self) -> str:
+        """
+        Returns the created date of the container image from the config
+
+        Returns:
+            str: The created date, as a string
+        """
+        return self.config.get("created", "")
+
+    def get_runtime_config(self) -> Dict[str, Any]:
+        """
+        Returns the runtime config for the container image from its config
+
+        Returns:
+            Dict[str, Any]: The container image runtime config
+        """
+        return self.config.get("config", {})
+
+    def get_env(self) -> List[str]:
+        """
+        Returns the list of environment variables set for the container image
+        at build time from the container image runtime config
+
+        Returns:
+            List[str]: The list of environment variables
+        """
+        return self.get_runtime_config().get("Env", [])
+
+    def get_author(self) -> str:
+        """
+        Returns the author of the container image from its config
+
+        Returns:
+            str: The container image author
+        """
+        return self.config.get("Author", "")
