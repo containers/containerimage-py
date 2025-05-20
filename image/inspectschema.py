@@ -61,7 +61,14 @@ CONTAINER_IMAGE_INSPECT_SCHEMA = {
             "description": "This OPTIONAL property is the tag of this " + \
                 "container image"
         },
-        # TODO: Add RepoTags property
+        "RepoTags": {
+            "type": "array",
+            "description": "This OPTIONAL property is the list of tags " + \
+                "for this container image in the remote registry",
+            "items": {
+                "type": "string"
+            }
+        },
         "Created": {
             "type": "string",
             "description": "This REQUIRED property is the date this " + \

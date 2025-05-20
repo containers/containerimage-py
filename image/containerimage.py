@@ -332,6 +332,18 @@ class ContainerImage(ContainerImageReference):
         # Return the image's config
         return config
 
+    def list_tags(self, auth: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Fetches the list of tags for the image from the distribution registry
+        API.
+        Args:
+            auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
+        
+        Returns:
+            Dict[str, Any]: The tag list loaded into a dict
+        """
+        return ContainerImageRegistryClient.list_tags(self, auth)
+
     def exists(self, auth: Dict[str, Any]) -> bool:
         """
         Determine if the image reference corresponds to an image in the remote
@@ -438,10 +450,14 @@ class ContainerImage(ContainerImageReference):
             self, manifest, auth
         )
 
+        # List the image's tags
+        tags = self.list_tags(auth)
+
         # Format the inspect dictionary
         inspect = {
             "Name": self.get_name(),
             "Digest": self.get_digest(auth=auth),
+            "RepoTags": tags["tags"],
             # TODO: Implement v2s1 manifest extension - only v2s1 manifests use this value
             "DockerVersion": "",
             "Created": config.get_created_date(),
