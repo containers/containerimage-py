@@ -18,7 +18,8 @@ from tests.registryclientmock   import  MOCK_IMAGE_NAME, \
                                         ATTESTATION_S390X_MANIFEST, \
                                         ATTESTATION_AMD64_ATTESTATION_MANIFEST, \
                                         ATTESTATION_S390X_ATTESTATION_MANIFEST, \
-                                        mock_get_manifest
+                                        mock_get_manifest, \
+                                        mock_list_tags
 
 def test_container_image_static_validation():
     # Ensure the empty string is invalid
@@ -249,6 +250,18 @@ def test_container_image_get_name():
         exc = e
     assert exc != None
     assert isinstance(exc, ContainerImageError)
+
+def test_container_image_list_tags(mocker):
+    mocker.patch(
+        "image.containerimage.ContainerImageRegistryClient.list_tags",
+        mock_list_tags
+    )
+
+    # Ensure the tag list response matches the expected
+    image = ContainerImage(f"{MOCK_IMAGE_NAME}:latest")
+    tags = image.list_tags(MOCK_REGISTRY_CREDS)
+    assert tags["name"] == MOCK_IMAGE_NAME
+    assert tags["tags"] == [ "latest", "latest-dup", "latest-attestation" ]
 
 def test_container_image_get_manifest(mocker):
     mocker.patch(
