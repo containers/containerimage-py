@@ -4,9 +4,38 @@ architecture, and optionally the variant on which the container image is built
 to run
 """
 
+import os
+import platform
 from typing                 import Dict, Any, Tuple, Union, List
 from jsonschema             import validate, ValidationError
 from image.manifestschema   import IMAGE_INDEX_ENTRY_PLATFORM_SCHEMA
+
+PLATFORM_ARCHITECTURE_MAP = {
+    'x86_64': 'amd64',
+    'amd64': 'amd64',
+    'i386': '386',
+    'i686': '386',
+    'arm64': 'arm64',
+    'aarch64': 'arm64',
+    'armv7l': 'arm',
+    'armv6l': 'arm',
+}
+"""
+A map used to transform the output of the platform.machine method such that it
+matches the expected value of GoLang's GOARCH environment variable
+"""
+
+DEFAULT_HOST_OS = platform.system().lower()
+DEFAULT_HOST_ARCH = PLATFORM_ARCHITECTURE_MAP.get(
+    platform.machine().lower(),
+    platform.machine().lower()
+)
+HOST_OS = os.environ.get("HOST_OS", DEFAULT_HOST_OS)
+HOST_ARCH = os.environ.get("HOST_ARCH", DEFAULT_HOST_ARCH)
+HOST_PLATFORM = {
+    "os": HOST_OS,
+    "architecture": HOST_ARCH
+}
 
 class ContainerImagePlatform:
     """
@@ -17,6 +46,16 @@ class ContainerImagePlatform:
     Note that the OCI and v2s2 specifications do not diverge in their schema for
     platform metadata, hence we reuse this class across both scenarios.
     """
+    @staticmethod
+    def get_host_platform() -> "ContainerImagePlatform":
+        """
+        Get the platform of the host machine
+
+        Returns:
+            ContainerImagePlatform: The host machine platform
+        """
+        return ContainerImagePlatform(HOST_PLATFORM)
+    
     @staticmethod
     def validate_static(platform: Dict[str, Any]) -> Tuple[bool, str]:
         """

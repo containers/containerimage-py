@@ -191,11 +191,11 @@ class ContainerImageRegistryClient:
 
         Args:
             str_or_ref (Union[str, ContainerImageReference]): An image reference corresponding to the blob descriptor
-            desc (Type[ContainerImageDescriptor]): A blob descriptor
+            desc (ContainerImageDescriptor): A blob descriptor
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
 
         Returns:
-            Type[requests.Response]: The registry API blob response
+            requests.Response: The registry API blob response
         """
         # If given a str, then load as a ref
         ref = str_or_ref
@@ -265,7 +265,91 @@ class ContainerImageRegistryClient:
         # Load the manifest into a dict and return
         config = res.json()
         return config
-    
+
+    @staticmethod
+    def query_tags(
+            str_or_ref: Union[str, ContainerImageReference],
+            auth: Dict[str, Any]
+        ) -> requests.Response:
+        """
+        Fetches the list of tags for a reference from the registry API and
+        returns as a dict
+        Args:
+            str_or_ref (Union[str, ContainerImageReference]): An image reference
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+        Returns:
+            requests.Response: The registry API tag list response
+        """
+        # If given a str, then load as a ref
+        ref = str_or_ref
+        if isinstance(str_or_ref, str):
+            ref = ContainerImageReference(str_or_ref)
+
+        # Construct the API URL for querying the image manifest
+        api_base_url = ContainerImageRegistryClient.get_registry_base_url(
+            ref
+        )
+        image_identifier = ref.get_identifier()
+        api_url = f'{api_base_url}/tags/list'
+
+        # Construct the headers for querying the image manifest
+        headers = {
+            'Accept': 'application/json'
+        }
+
+        # Get the matching auth for the image from the docker config JSON
+        reg_auth, found = ContainerImageRegistryClient.get_registry_auth(
+            ref,
+            auth
+        )
+        if found:
+            headers['Authorization'] = f'Basic {reg_auth}'
+
+        # Send the request to the distribution registry API
+        # If it fails with a 401 response code and auth given, do OAuth dance
+        res = requests.get(api_url, headers=headers)
+        if res.status_code == 401 and \
+            'www-authenticate' in res.headers.keys():
+            # Do Oauth dance if basic auth fails
+            # Ref: https://distribution.github.io/distribution/spec/auth/token/
+            scheme, token = ContainerImageRegistryClient.get_auth_token(
+                res, reg_auth
+            )
+            headers['Authorization'] = f'{scheme} {token}'
+            res = requests.get(api_url, headers=headers)
+
+        # Raise exceptions on error status codes
+        res.raise_for_status()
+        return res
+
+    @staticmethod
+    def list_tags(
+            str_or_ref: Union[str, ContainerImageReference],
+            auth: Dict[str, Any]
+        ) -> Dict[str, Any]:
+        """
+        Fetches the list of tags for a reference from the registry API and
+        returns as a dict
+        Args:
+            str_or_ref (Union[str, ContainerImageReference]): An image reference
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+        Returns:
+            Dict[str, Any]: The config as a dict
+        """
+        # If given a str, then load as a ref
+        ref = str_or_ref
+        if isinstance(str_or_ref, str):
+            ref = ContainerImageReference(str_or_ref)
+
+        # Query the tags, get the tag list response
+        res = ContainerImageRegistryClient.query_tags(
+            ref, auth
+        )
+
+        # Load the tag list into a dict and return
+        tags = res.json()
+        return tags
+
     @staticmethod
     def query_manifest(
             str_or_ref: Union[str, ContainerImageReference],

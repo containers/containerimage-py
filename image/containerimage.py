@@ -9,20 +9,21 @@ metadata and mutating the image through the registry API.
 from __future__ import annotations
 import json
 import requests
-from typing                 import  List, Dict, Any, \
-                                    Union, Type, Iterator
-from image.byteunit         import  ByteUnit
-from image.client           import  ContainerImageRegistryClient
-from image.config           import  ContainerImageConfig
-from image.errors           import  ContainerImageError
-from image.manifestfactory  import  ContainerImageManifestFactory
-from image.manifestlist     import  ContainerImageManifestList
-from image.oci              import  ContainerImageManifestOCI, \
-                                    ContainerImageIndexOCI
-from image.platform         import  ContainerImagePlatform
-from image.reference        import  ContainerImageReference
-from image.v2s2             import  ContainerImageManifestV2S2, \
-                                    ContainerImageManifestListV2S2
+from typing                         import  List, Dict, Any, \
+                                            Union, Type, Iterator
+from image.byteunit                 import  ByteUnit
+from image.client                   import  ContainerImageRegistryClient
+from image.config                   import  ContainerImageConfig
+from image.containerimageinspect    import  ContainerImageInspect
+from image.errors                   import  ContainerImageError
+from image.manifestfactory          import  ContainerImageManifestFactory
+from image.manifestlist             import  ContainerImageManifestList
+from image.oci                      import  ContainerImageManifestOCI, \
+                                            ContainerImageIndexOCI
+from image.platform                 import  ContainerImagePlatform
+from image.reference                import  ContainerImageReference
+from image.v2s2                     import  ContainerImageManifestV2S2, \
+                                            ContainerImageManifestListV2S2
 
 #########################################
 # Classes for managing container images #
@@ -85,6 +86,103 @@ class ContainerImage(ContainerImageReference):
         return isinstance(manifest, ContainerImageManifestOCI) or \
                 isinstance(manifest, ContainerImageIndexOCI)
     
+    @staticmethod
+    def get_host_platform_manifest_static(
+            ref: ContainerImageReference,
+            manifest: Union[
+                ContainerImageManifestV2S2,
+                ContainerImageManifestListV2S2,
+                ContainerImageManifestOCI,
+                ContainerImageIndexOCI
+            ],
+            auth: Dict[str, Any]
+        ) -> Union[
+            ContainerImageManifestV2S2,
+            ContainerImageManifestOCI
+        ]:
+        """
+        Given an image's reference and manifest, this static method checks if
+        the manifest is a manifest list, and attempts to get the manifest from
+        the list matching the host platform.
+
+        Args:
+            ref (ContainerImageReference): The image reference corresponding to the manifest
+            manifest (Union[ContainerImageManifestV2S2,ContainerImageManifestListV2S2,ContainerImageManifestOCI,ContainerImageIndexOCI]): The manifest object, generally from get_manifest method
+            auth (Dict[str, Any]): A valid docker config JSON with auth into the ref's registry
+        
+        Returns:
+            Union[ContainerImageManifestV2S2,ContainerImageManifestOCI]: The manifest response from the registry API
+
+        Raises:
+            ContainerImageError: Error if the image is a manifest list without a manifest matching the host platform
+        """
+        host_manifest = manifest
+
+        # If manifest list, get the manifest matching the host platform
+        if ContainerImage.is_manifest_list_static(manifest):
+            found = False
+            host_entry_digest = None
+            host_plt = ContainerImagePlatform.get_host_platform()
+            entries = manifest.get_entries()
+            for entry in entries:
+                if entry.get_platform() == host_plt:
+                    found = True
+                    host_entry_digest = entry.get_digest()
+            if not found:
+                raise ContainerImageError(
+                    "no image found in manifest list for platform: " + \
+                    f"{str(host_plt)}"
+                )
+            host_ref = ContainerImage(
+                f"{ref.get_name()}@{host_entry_digest}"
+            )
+            host_manifest = host_ref.get_manifest(auth=auth)
+        
+        # Return the manifest matching the host platform
+        return host_manifest
+
+    @staticmethod
+    def get_config_static(
+            ref: ContainerImageReference,
+            manifest: Union[
+                ContainerImageManifestV2S2,
+                ContainerImageManifestListV2S2,
+                ContainerImageManifestOCI,
+                ContainerImageIndexOCI
+            ],
+            auth: Dict[str, Any]
+        ) -> ContainerImageConfig:
+        """
+        Given an image's manifest, this static method fetches that image's
+        config from the distribution registry API.  If the image is a manifest
+        list, then it gets the config corresponding to the manifest matching
+        the host platform.
+
+        Args:
+            ref (ContainerImageReference): The image reference corresponding to the manifest
+            manifest (Union[ContainerImageManifestV2S2,ContainerImageManifestListV2S2,ContainerImageManifestOCI,ContainerImageIndexOCI]): The manifest object, generally from get_manifest method
+            auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
+        
+        Returns:
+            ContainerImageConfig: The config for this image
+
+        Raises:
+            ContainerImageError: Error if the image is a manifest list without a manifest matching the host platform
+        """
+        # If manifest list, get the manifest matching the host platform
+        manifest = ContainerImage.get_host_platform_manifest_static(
+            ref, manifest, auth
+        )
+        
+        # Get the image's config
+        return ContainerImageConfig(
+            ContainerImageRegistryClient.get_config(
+                ref,
+                manifest.get_config_descriptor(),
+                auth=auth
+            )
+        )
+
     def __init__(self, ref: str):
         """
         Constructor for the ContainerImage class
@@ -179,6 +277,73 @@ class ContainerImage(ContainerImageReference):
             ContainerImageRegistryClient.get_manifest(self, auth)
         )
     
+    def get_host_platform_manifest(self, auth: Dict[str, Any]) -> Union[
+            ContainerImageManifestOCI,
+            ContainerImageManifestV2S2
+        ]:
+        """
+        Fetches the manifest from the distribution registry API.  If the
+        manifest is a manifest list, then it attempts to fetch the manifest
+        in the list matching the host platform.  If not found, an exception is
+        raised.
+
+        Args:
+            auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
+        
+        Returns:
+            Union[ContainerImageManifestV2S2,ContainerImageManifestOCI]: The manifest response from the registry API
+
+        Raises:
+            ContainerImageError: Error if the image is a manifest list without a manifest matching the host platform
+        """
+        # Get the container image's manifest
+        manifest = self.get_manifest(auth=auth)
+        
+        # Return the host platform manifest
+        return ContainerImage.get_host_platform_manifest_static(
+            self,
+            manifest,
+            auth
+        )
+
+    def get_config(self, auth: Dict[str, Any]) -> ContainerImageConfig:
+        """
+        Fetches the image's config from the distribution registry API.  If the
+        image is a manifest list, then it gets the config corresponding to the
+        manifest matching the host platform.
+
+        Args:
+            auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
+        
+        Returns:
+            ContainerImageConfig: The config for this image
+
+        Raises:
+            ContainerImageError: Error if the image is a manifest list without a manifest matching the host platform
+        """
+        # Get the image's manifest
+        manifest = self.get_manifest(auth=auth)
+
+        # Use the image's manifest to get the image's config
+        config = ContainerImage.get_config_static(
+            self, manifest, auth
+        )
+
+        # Return the image's config
+        return config
+
+    def list_tags(self, auth: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Fetches the list of tags for the image from the distribution registry
+        API.
+        Args:
+            auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
+        
+        Returns:
+            Dict[str, Any]: The tag list loaded into a dict
+        """
+        return ContainerImageRegistryClient.list_tags(self, auth)
+
     def exists(self, auth: Dict[str, Any]) -> bool:
         """
         Determine if the image reference corresponds to an image in the remote
@@ -266,6 +431,64 @@ class ContainerImage(ContainerImageReference):
         """
         return ByteUnit.format_size_bytes(self.get_size(auth))
     
+    def inspect(self, auth: Dict[str, Any]) -> ContainerImageInspect:
+        """
+        Returns a collection of basic information about the image, equivalent
+        to skopeo inspect.
+
+        Args:
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+        
+        Returns:
+            ContainerImageInspect: A collection of information about the image
+        """
+        # Get the image's manifest
+        manifest = self.get_host_platform_manifest(auth=auth)
+
+        # Use the image's manifest to get the image's config
+        config = ContainerImage.get_config_static(
+            self, manifest, auth
+        )
+
+        # List the image's tags
+        tags = self.list_tags(auth)
+
+        # Format the inspect dictionary
+        inspect = {
+            "Name": self.get_name(),
+            "Digest": self.get_digest(auth=auth),
+            "RepoTags": tags["tags"],
+            # TODO: Implement v2s1 manifest extension - only v2s1 manifests use this value
+            "DockerVersion": "",
+            "Created": config.get_created_date(),
+            "Labels": config.get_labels(),
+            "Architecture": config.get_architecture(),
+            "Variant": config.get_variant() or "",
+            "Os": config.get_os(),
+            "Layers": [ 
+                layer.get_digest() \
+                for layer \
+                in manifest.get_layer_descriptors()
+            ],
+            "LayersData": [
+                {
+                    "MIMEType": layer.get_media_type(),
+                    "Digest": layer.get_digest(),
+                    "Size": layer.get_size(),
+                    "Annotations": layer.get_annotations() or {}
+                } for layer in manifest.get_layer_descriptors()
+            ],
+            "Env": config.get_env(),
+            "Author": config.get_author()
+        }
+
+        # Set the tag in the inspect dict
+        if self.is_tag_ref():
+            inspect["Tag"] = self.get_identifier()
+        
+        # TODO: Get the RepoTags for the image
+        return ContainerImageInspect(inspect)
+
     def delete(self, auth: Dict[str, Any]):
         """
         Deletes the image from the registry.
