@@ -3,6 +3,8 @@ import os
 from typing                 import  Any, Dict, Type, Union
 from image.v2s2             import  ContainerImageManifestV2S2
 from image.containerimage   import  ContainerImage
+from image.config           import  ContainerImageConfig
+from image.descriptor       import  ContainerImageDescriptor
 
 """
 ContainerImageRegistryClient mocks
@@ -68,6 +70,11 @@ ATTESTATION_AMD64_ATTESTATION_MANIFEST = _load_mock_manifest(
 )
 ATTESTATION_S390X_ATTESTATION_MANIFEST = _load_mock_manifest(
     f"{WORKDIR}/mock/manifests/attestation-s390x-attestation-manifest.json"
+)
+
+# An example container image config
+MOCK_CONFIG = _load_mock_manifest(
+    f"{WORKDIR}/mock/configs/config.json"
 )
 
 # Mock an image name
@@ -142,6 +149,27 @@ def mock_get_manifest(ref_or_img: Union[str, ContainerImage], auth: Dict[str, An
     elif str(ref_or_img) == f"{MOCK_IMAGE_NAME}@" + \
         "sha256:61d78e5bc2772b75b97fc80f1e796594da4c5421957872be9302b39b1cf155b8":
         return ATTESTATION_S390X_ATTESTATION_MANIFEST
+    else:
+        raise Exception(f"Unmocked reference: {ref_or_img}")
+
+# Mock the ContainerImageRegistryClient.get_config function
+def mock_get_config(
+        ref_or_img: Union[str, ContainerImage],
+        config_desc: ContainerImageDescriptor,
+        auth: Dict[str, Any]
+    ) -> Dict[str, Any]:
+    """
+    Mocks the ContainerImageRegistryClient.get_config function
+
+    Args:
+    ref (Union[str, ContainerImage]): The image reference
+    auth (Dict[str, Any]): The auth for the reference
+
+    Returns:
+    ContainerImageConfig: The container image config
+    """
+    if str(ref_or_img) == f"{MOCK_IMAGE_NAME}:latest":
+        return MOCK_CONFIG
     else:
         raise Exception(f"Unmocked reference: {ref_or_img}")
 
