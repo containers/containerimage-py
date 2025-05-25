@@ -1,25 +1,28 @@
 import json
-from image.byteunit             import  ByteUnit
-from image.errors               import  ContainerImageError
-from image.v2s2                 import  ContainerImageManifestV2S2
-from image.oci                  import  ContainerImageManifestOCI
-from image.containerimage       import  ContainerImage, \
-                                        ContainerImageManifestListV2S2, \
-                                        ContainerImageIndexOCI
-from tests.registryclientmock   import  MOCK_IMAGE_NAME, \
-                                        MOCK_REGISTRY_CREDS, \
-                                        REDHAT_MANIFEST_LIST_EXAMPLE, \
-                                        REDHAT_AMD64_MANIFEST, \
-                                        REDHAT_ARM64_MANIFEST, \
-                                        REDHAT_PPC64LE_MANIFEST, \
-                                        REDHAT_S390X_MANIFEST, \
-                                        ATTESTATION_MANIFEST_LIST_EXAMPLE, \
-                                        ATTESTATION_AMD64_MANIFEST, \
-                                        ATTESTATION_S390X_MANIFEST, \
-                                        ATTESTATION_AMD64_ATTESTATION_MANIFEST, \
-                                        ATTESTATION_S390X_ATTESTATION_MANIFEST, \
-                                        mock_get_manifest, \
-                                        mock_list_tags
+from image.byteunit                 import  ByteUnit
+from image.errors                   import  ContainerImageError
+from image.v2s2                     import  ContainerImageManifestV2S2
+from image.oci                      import  ContainerImageManifestOCI
+from image.containerimage           import  ContainerImage, \
+                                            ContainerImageManifestListV2S2, \
+                                            ContainerImageIndexOCI
+from image.containerimageinspect    import ContainerImageInspect
+from tests.registryclientmock       import  MOCK_IMAGE_NAME, \
+                                            MOCK_REGISTRY_CREDS, \
+                                            REDHAT_MANIFEST_LIST_EXAMPLE, \
+                                            REDHAT_AMD64_MANIFEST, \
+                                            REDHAT_ARM64_MANIFEST, \
+                                            REDHAT_PPC64LE_MANIFEST, \
+                                            REDHAT_S390X_MANIFEST, \
+                                            ATTESTATION_MANIFEST_LIST_EXAMPLE, \
+                                            ATTESTATION_AMD64_MANIFEST, \
+                                            ATTESTATION_S390X_MANIFEST, \
+                                            ATTESTATION_AMD64_ATTESTATION_MANIFEST, \
+                                            ATTESTATION_S390X_ATTESTATION_MANIFEST, \
+                                            mock_get_manifest, \
+                                            mock_list_tags, \
+                                            mock_get_config, \
+                                            mock_get_digest
 
 def test_container_image_static_validation():
     # Ensure the empty string is invalid
@@ -302,6 +305,42 @@ def test_container_image_get_manifest(mocker):
         exc = e
     assert exc != None
     assert isinstance(exc, ContainerImageError)
+
+def test_container_image_inspect(mocker):
+    mocker.patch(
+        "image.containerimage.ContainerImageRegistryClient.get_manifest",
+        mock_get_manifest
+    )
+    mocker.patch(
+        "image.containerimage.ContainerImageRegistryClient.list_tags",
+        mock_list_tags
+    )
+    mocker.patch(
+        "image.containerimage.ContainerImageRegistryClient.get_config",
+        mock_get_config
+    )
+    mocker.patch(
+        "image.containerimage.ContainerImageRegistryClient.get_digest",
+        mock_get_digest
+    )
+    image = ContainerImage(f"{MOCK_IMAGE_NAME}:latest")
+
+    # Ensure the inspect response matches the expected
+    exc = None
+    try:
+        inspect = image.inspect(MOCK_REGISTRY_CREDS)
+    except Exception as e:
+        exc = e
+    assert exc == None
+    assert isinstance(inspect, ContainerImageInspect)
+    assert inspect.inspect["Digest"] == "sha256:8f74ffc756f871ee9037fb8e0c3cd9c5cb54e92e014f92d771ab8e6bf925f372"
+    assert inspect.inspect["RepoTags"] == [ "latest", "latest-dup", "latest-attestation" ]
+    assert inspect.inspect["Created"] == "2015-10-31T22:22:56.015925234Z"
+    assert inspect.inspect["Labels"] == {
+        "com.example.project.git.url": "https://example.com/project.git",
+        "com.example.project.git.commit": "45a939b2999782a3f005621a8d0f29aa387e1d6b"
+    }
+    assert inspect.inspect["Author"] == "Alyssa P. Hacker <alyspdev@example.com>"
 
 def test_container_image_is_manifest_list(mocker):
     mocker.patch(

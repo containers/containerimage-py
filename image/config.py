@@ -114,7 +114,7 @@ class ContainerImageConfig:
         Returns:
             Dict[str, str]: The labels from the config
         """
-        return self.config.get("Labels", {})
+        return self.get_runtime_config().get("Labels", {})
 
     def get_created_date(self) -> str:
         """
@@ -151,4 +151,4 @@ class ContainerImageConfig:
         Returns:
             str: The container image author
         """
-        return self.config.get("Author", "")
+        return self.config.get("author", "")
