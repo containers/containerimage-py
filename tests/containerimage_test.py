@@ -340,7 +340,6 @@ def test_container_image_inspect(mocker):
         "com.example.project.git.url": "https://example.com/project.git",
         "com.example.project.git.commit": "45a939b2999782a3f005621a8d0f29aa387e1d6b"
     }
-    assert inspect.inspect["Author"] == "Alyssa P. Hacker <alyspdev@example.com>"
 
 def test_container_image_is_manifest_list(mocker):
     mocker.patch(

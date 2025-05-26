@@ -21,12 +21,19 @@ CONTAINER_IMAGE_LAYER_INSPECT_SCHEMA = {
                 "container image layer measured in bytes"
         },
         "Annotations": {
-            "type": "object",
-            "description": "This OPTIONAL property is the set of " + \
-                "annotations belonging to this container image",
-            "patternProperties": {
-                "(^.*$)": { "type": "string" }
-            }
+            "anyOf": [
+                {
+                    "type": "object",
+                    "description": "This OPTIONAL property is the set of " + \
+                        "annotations belonging to this container image",
+                    "patternProperties": {
+                        "(^.*$)": { "type": "string" }
+                    }
+                },
+                {
+                    "type": "null"
+                }
+            ]
         }
     }
 }
@@ -80,12 +87,19 @@ CONTAINER_IMAGE_INSPECT_SCHEMA = {
                 "docker used to build this container image"
         },
         "Labels": {
-            "type": "object",
-            "description": "This REQUIRED property is the set of labels " + \
-                "applied to this container image at build time",
-            "patternProperties": {
-                "(^.*$)": { "type": "string" }
-            }
+            "anyOf": [
+                {
+                    "type": "object",
+                    "description": "This REQUIRED property is the set of labels " + \
+                        "applied to this container image at build time",
+                    "patternProperties": {
+                        "(^.*$)": { "type": "string" }
+                    }
+                },
+                {
+                    "type": "null"
+                }
+            ]
         },
         "Architecture": {
             "type": "string",
