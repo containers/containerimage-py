@@ -37,6 +37,12 @@ Here is a quick motivating example for how you might use ``containerimage-py`` i
       my_image.get_digest(auth={}) # sha256:1ff6c18fbef2045af6b9c16bf034cc421a29027b800e4f9b68ae9b1cb3e9ae07
    )
 
+   # Inspect the container image image for a more consolidated summary
+   print(
+      f"Inspect for {str(my_image)}:\n" + \
+      str(my_image.inspect(auth={})) # Same as skopeo inspect docker://registry.k8s.io/pause:3.5
+   )
+
 Installation
 ============
 
