@@ -52,6 +52,14 @@ image.containerimage module
    :undoc-members:
    :show-inheritance:
 
+image.containerimageinspect module
+----------------------------------
+
+.. automodule:: image.containerimageinspect
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 image.descriptor module
 -----------------------
 
@@ -64,6 +72,14 @@ image.errors module
 -------------------
 
 .. automodule:: image.errors
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+image.inspectschema module
+--------------------------
+
+.. automodule:: image.inspectschema
    :members:
    :undoc-members:
    :show-inheritance:
