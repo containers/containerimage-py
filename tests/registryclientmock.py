@@ -3,6 +3,8 @@ import os
 from typing                 import  Any, Dict, Type, Union
 from image.v2s2             import  ContainerImageManifestV2S2
 from image.containerimage   import  ContainerImage
+from image.config           import  ContainerImageConfig
+from image.descriptor       import  ContainerImageDescriptor
 
 """
 ContainerImageRegistryClient mocks
@@ -70,8 +72,23 @@ ATTESTATION_S390X_ATTESTATION_MANIFEST = _load_mock_manifest(
     f"{WORKDIR}/mock/manifests/attestation-s390x-attestation-manifest.json"
 )
 
+# An example container image config
+MOCK_CONFIG = _load_mock_manifest(
+    f"{WORKDIR}/mock/configs/config.json"
+)
+
 # Mock an image name
 MOCK_IMAGE_NAME = "this.is/my/registry/and-my-image"
+
+# Mock an image tag list response
+MOCK_TAG_LIST_RESPONSE = {
+    "name": MOCK_IMAGE_NAME,
+    "tags": [
+        "latest",
+        "latest-dup",
+        "latest-attestation"
+    ]
+}
 
 # Mock image registry creds for the above image name mock
 MOCK_REGISTRY_CREDS = {
@@ -135,6 +152,27 @@ def mock_get_manifest(ref_or_img: Union[str, ContainerImage], auth: Dict[str, An
     else:
         raise Exception(f"Unmocked reference: {ref_or_img}")
 
+# Mock the ContainerImageRegistryClient.get_config function
+def mock_get_config(
+        ref_or_img: Union[str, ContainerImage],
+        config_desc: ContainerImageDescriptor,
+        auth: Dict[str, Any]
+    ) -> Dict[str, Any]:
+    """
+    Mocks the ContainerImageRegistryClient.get_config function
+
+    Args:
+    ref (Union[str, ContainerImage]): The image reference
+    auth (Dict[str, Any]): The auth for the reference
+
+    Returns:
+    ContainerImageConfig: The container image config
+    """
+    if str(ref_or_img) == f"{MOCK_IMAGE_NAME}:latest":
+        return MOCK_CONFIG
+    else:
+        raise Exception(f"Unmocked reference: {ref_or_img}")
+
 def mock_get_digest(ref_or_img: Union[str, ContainerImage], auth: Dict[str, Any]) -> str:
     """
     Mocks the ContainerImageRegistryClient.get_digest function
@@ -150,3 +188,16 @@ def mock_get_digest(ref_or_img: Union[str, ContainerImage], auth: Dict[str, Any]
         return "sha256:8f74ffc756f871ee9037fb8e0c3cd9c5cb54e92e014f92d771ab8e6bf925f372"
     else:
         raise Exception(f"Unmocked reference: {ref_or_img}")
+
+def mock_list_tags(ref_or_img: Union[str, ContainerImage], auth: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Mocks the ContainerImageRegistryClient.list_tags function
+
+    Args:
+    ref (Union[str, ContainerImage]): The image reference
+    auth (Dict[str, Any]): The auth for the reference
+
+    Returns:
+    Dict[str, Any]: The tag list response
+    """
+    return MOCK_TAG_LIST_RESPONSE

@@ -1,0 +1,35 @@
+{
+    "Name": "registry.fedoraproject.org/fedora",
+    "Digest": "sha256:0f65bee641e821f8118acafb44c2f8fe30c2fc6b9a2b3729c0660376391aa117",
+    "RepoTags": [
+        "34-aarch64",
+        "34",
+        "latest"
+    ],
+    "Created": "2022-11-24T13:54:18Z",
+    "DockerVersion": "1.10.1",
+    "Labels": {
+        "license": "MIT",
+        "name": "fedora",
+        "vendor": "Fedora Project",
+        "version": "37"
+    },
+    "Architecture": "amd64",
+    "Os": "linux",
+    "Layers": [
+        "sha256:2a0fc6bf62e155737f0ace6142ee686f3c471c1aab4241dc3128904db46288f0"
+    ],
+    "LayersData": [
+        {
+            "MIMEType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+            "Digest": "sha256:2a0fc6bf62e155737f0ace6142ee686f3c471c1aab4241dc3128904db46288f0",
+            "Size": 71355009,
+            "Annotations": null
+        }
+    ],
+    "Env": [
+        "DISTTAG=f37container",
+        "FGC=f37",
+        "container=oci"
+    ]
+}
