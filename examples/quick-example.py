@@ -17,7 +17,7 @@ sys.path.insert(
 from image.containerimage import ContainerImage
 
 # Initialize a ContainerImage given a tag reference
-my_image = ContainerImage("registry.k8s.io/pause:3.5")
+my_image = ContainerImage("ghcr.io/matejvasek/builder-ubi8-base:latest")
 
 # Display some basic information about the container image
 print(
@@ -27,4 +27,10 @@ print(
 print(
     f"Digest for {str(my_image)}: " + \
     my_image.get_digest(auth={}) # sha256:1ff6c18fbef2045af6b9c16bf034cc421a29027b800e4f9b68ae9b1cb3e9ae07
+)
+
+# Inspect the container image image for a more consolidated summary
+print(
+    f"Inspect for {str(my_image)}:\n" + \
+    str(my_image.inspect(auth={})) # Same as skopeo inspect docker://registry.k8s.io/pause:3.5
 )
