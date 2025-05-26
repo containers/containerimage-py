@@ -463,7 +463,6 @@ class ContainerImage(ContainerImageReference):
             "Created": config.get_created_date(),
             "Labels": config.get_labels(),
             "Architecture": config.get_architecture(),
-            "Variant": config.get_variant() or "",
             "Os": config.get_os(),
             "Layers": [ 
                 layer.get_digest() \
@@ -478,9 +477,13 @@ class ContainerImage(ContainerImageReference):
                     "Annotations": layer.get_annotations() or {}
                 } for layer in manifest.get_layer_descriptors()
             ],
-            "Env": config.get_env(),
-            "Author": config.get_author()
+            "Env": config.get_env()
         }
+
+        # Set the variant in the inspect dict if found
+        variant = config.get_variant()
+        if variant:
+            inspect["Variant"] = variant
 
         # Set the tag in the inspect dict
         if self.is_tag_ref():

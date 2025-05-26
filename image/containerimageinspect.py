@@ -1,5 +1,7 @@
 import json
+import re
 from image.errors import ContainerImageError
+from image.regex import ANCHORED_DIGEST, ANCHORED_NAME
 from image.inspectschema import CONTAINER_IMAGE_INSPECT_SCHEMA
 from jsonschema import validate
 from typing import Dict, Any, Tuple
@@ -21,7 +23,7 @@ class ContainerImageInspect:
             bool: Whether the container image inspect dict was valid
             str: Error message if it was invalid
         """
-        # Validate the container image inspect dict
+        # Validate the container image inspect dict against its json schema
         try:
             validate(
                 instance=inspect,
@@ -29,6 +31,22 @@ class ContainerImageInspect:
             )
         except Exception as e:
             return False, str(e)
+        
+        # Validate the name and digest
+        if len(inspect["Name"]) > 0 and not bool(re.match(ANCHORED_NAME, inspect["Name"])):
+            return False, f"Invalid Name: {inspect['Name']}"
+        if not bool(re.match(ANCHORED_DIGEST, inspect["Digest"])):
+            return False, f"Invalid Digest: {inspect['Digest']}"
+
+        # Validate the layer and layersdata digests
+        for digest in inspect["Layers"]:
+            if not bool(re.match(ANCHORED_DIGEST, digest)):
+                return False, f"Invalid digest in Layers: {digest}"
+        for layerdata in inspect["LayersData"]:
+            if not bool(re.match(ANCHORED_DIGEST, layerdata["Digest"])):
+                return False, f"Invalid digest in LayersData: {layerdata['Digest']}"
+        
+        # If all pass then the inspect is valid
         return True, ""
 
     def __init__(self, inspect: Dict[str, Any]) -> "ContainerImageInspect":
