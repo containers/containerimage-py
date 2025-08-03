@@ -136,15 +136,23 @@ class ContainerImageReference:
         if not valid:
             raise ContainerImageError(err)
         
+        # Split the domain out of the image path
+        components = self.ref.split("/")
+        domain = components.pop(0)
+        path = "/".join(components)
+        
         # Parse out any digests or tags
-        digestless = self.ref.split("@")[0]
-        tagless = digestless.split(":")[0]
+        digestless_path = path.split("@")[0]
+        tagless_path = digestless_path.split(":")[0]
+
+        # Recombine into a name
+        name = f"{domain}/{tagless_path}"
 
         # Validate the image name, if valid then return
-        valid = bool(re.match(ANCHORED_NAME, tagless))
+        valid = bool(re.match(ANCHORED_NAME, name))
         if not valid:
-            raise ContainerImageError(f"Invalid name: {tagless}")
-        return tagless
+            raise ContainerImageError(f"Invalid name: {name}")
+        return name
 
     def get_registry(self) -> str:
         """

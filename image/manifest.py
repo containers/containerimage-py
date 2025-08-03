@@ -4,7 +4,7 @@ v2s2 and OCI specifications for their respective manifest implementations
 """
 
 import json
-from typing             import  Dict, Any, List, Type
+from typing             import  Dict, Any, List
 from image.descriptor   import  ContainerImageDescriptor
 
 class ContainerImageManifest:
