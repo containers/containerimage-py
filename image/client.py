@@ -11,8 +11,6 @@ import requests
 import urllib
 from image.descriptor   import  ContainerImageDescriptor
 from image.errors       import  ContainerImageError
-from image.manifest     import  ContainerImageManifest
-from image.manifestlist import  ContainerImageManifestList
 from image.mediatypes   import  DOCKER_V2S2_MEDIA_TYPE, \
                                 DOCKER_V2S2_LIST_MEDIA_TYPE, \
                                 OCI_INDEX_MEDIA_TYPE, \
@@ -41,7 +39,8 @@ class ContainerImageRegistryClient:
     """
     @staticmethod
     def get_registry_base_url(
-            str_or_ref: Union[str, ContainerImageReference]
+            str_or_ref: Union[str, ContainerImageReference],
+            http: bool=False
         ) -> str:
         """
         Constructs the distribution registry API base URL from the image
@@ -55,6 +54,7 @@ class ContainerImageRegistryClient:
 
         Args:
             str_or_ref (Union[str, ContainerImageReference]): An image reference
+            http (bool): Whether to use HTTP
 
         Returns:
             str: The distribution registry API base URL
@@ -63,24 +63,18 @@ class ContainerImageRegistryClient:
         ref = str_or_ref
         if isinstance(str_or_ref, str):
             ref = ContainerImageReference(str_or_ref)
-
-        # Split reference into slash-separated components
-        # Get domain, it is the first element of the list
-        # Join all but the first and last components into the path
-        domain_components = ref.ref.split('/')
-        domain = domain_components[0]
-        path = "/".join(domain_components[1:-1])
-
-        # Get name, it is the last element of the list
-        # But if tag and/or digest, those must be parsed out of the name
-        name = domain_components[-1].split("@")[0].split(":")[0]
+        
+        # Get the domain and image name from the ref
+        domain = ref.get_registry()
+        path = ref.get_path()
 
         # If the domain is docker.io, then convert it to registry-1.docker.io
         if domain == 'docker.io':
             domain = 'registry-1.docker.io'
 
         # Format and return the registry URL base image
-        return f"https://{domain}/v2/{path}/{name}"
+        transport = "https" if not http else "http"
+        return f"{transport}://{domain}/v2/{path}"
     
     @staticmethod
     def get_registry_auth(
@@ -134,7 +128,8 @@ class ContainerImageRegistryClient:
     @staticmethod
     def get_auth_token(
             res: requests.Response,
-            reg_auth: str
+            reg_auth: str,
+            skip_verify: bool=False
         ) -> Tuple[str, str]:
         """
         The response from the distribution registry API, which MUST be a 401
@@ -143,6 +138,7 @@ class ContainerImageRegistryClient:
         Args:
             res (requests.Response): The response from the registry API
             reg_auth (str): The auth retrieved for the registry
+            skip_verify (bool): Insecure, skip TLS cert verification
 
         Returns:
             str: The auth scheme for the token
@@ -175,7 +171,11 @@ class ContainerImageRegistryClient:
             headers = {
                 'Authorization': f"Basic {reg_auth}"
             }
-        token_res = requests.get(auth_url, headers=headers)
+        token_res = requests.get(
+            auth_url,
+            headers=headers,
+            verify=not skip_verify
+        )
         token_res.raise_for_status()
         token_json = token_res.json()
         token = token_json['token']
@@ -185,7 +185,9 @@ class ContainerImageRegistryClient:
     def query_blob(
             str_or_ref: Union[str, ContainerImageReference],
             desc: ContainerImageDescriptor,
-            auth: Dict[str, Any]
+            auth: Dict[str, Any]={},
+            skip_verify: bool=False,
+            http: bool=False
         ) -> requests.Response:
         """
         Fetches a blob from the registry API and returns as a requests response
@@ -195,6 +197,8 @@ class ContainerImageRegistryClient:
             str_or_ref (Union[str, ContainerImageReference]): An image reference corresponding to the blob descriptor
             desc (ContainerImageDescriptor): A blob descriptor
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             requests.Response: The registry API blob response
@@ -205,7 +209,10 @@ class ContainerImageRegistryClient:
             ref = ContainerImageReference(str_or_ref)
         
         # Construct the API URL for querying the blob
-        api_base_url = ContainerImageRegistryClient.get_registry_base_url(ref)
+        api_base_url = ContainerImageRegistryClient.get_registry_base_url(
+            ref,
+            http=http
+        )
         digest = desc.get_digest()
         api_url = f'{api_base_url}/blobs/{digest}'
 
@@ -222,16 +229,24 @@ class ContainerImageRegistryClient:
         
         # Send the request to the distribution registry API
         # If it fails with a 401 response code and auth given, do OAuth dance
-        res = requests.get(api_url, headers=headers)
+        res = requests.get(
+            api_url,
+            headers=headers,
+            verify=not skip_verify
+        )
         if res.status_code == 401 and \
             'www-authenticate' in res.headers.keys():
             # Do Oauth dance if basic auth fails
             # Ref: https://distribution.github.io/distribution/spec/auth/token/
             scheme, token = ContainerImageRegistryClient.get_auth_token(
-                res, reg_auth
+                res, reg_auth, skip_verify=skip_verify
             )
             headers['Authorization'] = f'{scheme} {token}'
-            res = requests.get(api_url, headers=headers)
+            res = requests.get(
+                api_url,
+                headers=headers,
+                verify=not skip_verify
+            )
 
         # Raise exceptions on error status codes
         res.raise_for_status()
@@ -241,7 +256,9 @@ class ContainerImageRegistryClient:
     def get_blob(
             str_or_ref: Union[str, ContainerImageReference],
             desc: ContainerImageDescriptor,
-            auth: Dict[str, Any]
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
         ) -> bytes:
         """
         Fetches a blob from the registry API and returns as bytes
@@ -250,6 +267,8 @@ class ContainerImageRegistryClient:
             str_or_ref (Union[str, ContainerImageReference]): The reference corresponding to the blob descriptor
             desc (ContainerImageDescriptor): A blob descriptor
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             bytes: The blob as bytes
@@ -261,7 +280,7 @@ class ContainerImageRegistryClient:
 
         # Query the blob and capture the response
         res = ContainerImageRegistryClient.query_blob(
-            ref, desc, auth
+            ref, desc, auth, skip_verify=skip_verify, http=http
         )
 
         # Load the blob content and return
@@ -270,17 +289,21 @@ class ContainerImageRegistryClient:
     @staticmethod
     def initialize_upload(
             str_or_ref: Union[str, ContainerImageReference],
-            auth: Dict[str, Any]
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
         ) -> str:
         """
-        Initializes a blob upload and returns the upload UUID
+        Initializes a blob upload and returns the upload URL
 
         Args:
             str_or_ref (Union[str, ContainerImageReference]): A reference under which to upload the blob
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
         
         Returns:
-            str: The blob upload UUID
+            str: The blob upload URL
         """
         # If given a str, then load as a ref
         ref = str_or_ref
@@ -288,7 +311,10 @@ class ContainerImageRegistryClient:
             ref = ContainerImageReference(str_or_ref)
         
         # Construct the API URL for initializing the blob upload
-        api_base_url = ContainerImageRegistryClient.get_registry_base_url(ref)
+        api_base_url = ContainerImageRegistryClient.get_registry_base_url(
+            ref,
+            http=http
+        )
         api_url = f'{api_base_url}/blobs/uploads/'
 
         # Construct the headers for querying the image manifest
@@ -304,26 +330,36 @@ class ContainerImageRegistryClient:
         
         # Send the request to the distribution registry API
         # If it fails with a 401 response code and auth given, do OAuth dance
-        res = requests.post(api_url, headers=headers)
+        res = requests.post(
+            api_url,
+            headers=headers,
+            verify=not skip_verify
+        )
         if res.status_code == 401 and \
             'www-authenticate' in res.headers.keys():
             # Do Oauth dance if basic auth fails
             # Ref: https://distribution.github.io/distribution/spec/auth/token/
             scheme, token = ContainerImageRegistryClient.get_auth_token(
-                res, reg_auth
+                res, reg_auth, skip_verify=skip_verify
             )
             headers['Authorization'] = f'{scheme} {token}'
-            res = requests.post(api_url, headers=headers)
+            res = requests.post(
+                api_url,
+                headers=headers,
+                verify=not skip_verify
+            )
 
         # Extract the upload UUID from the request response
         res.raise_for_status()
-        return res.headers["Docker-Upload-UUID"]
+        return res.headers["Location"]
 
     @staticmethod
     def blob_exists(
             str_or_ref: Union[str, ContainerImageReference],
             desc: ContainerImageDescriptor,
-            auth: Dict[str, Any]
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
         ) -> bool:
         """
         Queries the registry API for whether a blob exists before uploading
@@ -332,6 +368,8 @@ class ContainerImageRegistryClient:
             str_or_ref (Union[str, ContainerImageReference]): An image reference under which to upload the blob
             desc (ContainerImageDescriptor): A blob descriptor
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
         
         Returns:
             bool: Whether the blob already exists in the registry
@@ -342,7 +380,10 @@ class ContainerImageRegistryClient:
             ref = ContainerImageReference(str_or_ref)
         
         # Construct the API URL for querying for existence of the blob
-        api_base_url = ContainerImageRegistryClient.get_registry_base_url(ref)
+        api_base_url = ContainerImageRegistryClient.get_registry_base_url(
+            ref,
+            http=http
+        )
         api_url = f'{api_base_url}/blobs/{desc.get_digest()}'
 
         # Construct the headers for querying the blob
@@ -360,16 +401,24 @@ class ContainerImageRegistryClient:
         
         # Send the request to the distribution registry API
         # If it fails with a 401 response code and auth given, do OAuth dance
-        res = requests.head(api_url, headers=headers)
+        res = requests.head(
+            api_url,
+            headers=headers,
+            verify=not skip_verify
+        )
         if res.status_code == 401 and \
             'www-authenticate' in res.headers.keys():
             # Do Oauth dance if basic auth fails
             # Ref: https://distribution.github.io/distribution/spec/auth/token/
             scheme, token = ContainerImageRegistryClient.get_auth_token(
-                res, reg_auth
+                res, reg_auth, skip_verify=skip_verify
             )
             headers['Authorization'] = f'{scheme} {token}'
-            res = requests.post(api_url, headers=headers)
+            res = requests.post(
+                api_url,
+                headers=headers,
+                verify=not skip_verify
+            )
 
         # Return true if a 200 response is returned
         # Ref: https://distribution.github.io/distribution/spec/api/#existing-layers
@@ -378,24 +427,28 @@ class ContainerImageRegistryClient:
     @staticmethod
     def upload_blob(
             str_or_ref: Union[str, ContainerImageReference],
-            upload_id: str,
+            upload_url: str,
             desc: ContainerImageDescriptor,
             content: bytes,
-            auth: Dict[str, Any]
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
         ):
         """
         Uploads a blob to the registry API underneath the given reference
 
         Args:
             str_or_ref (Union[str, ContainerImageReference]): The reference under which to upload the blob
-            upload_id (str): The UUID of the upload, get from initialize_upload
+            upload_url (str): The URL of the upload, get from initialize_upload
             desc (ContainerImageDescriptor): A blob descriptor
             content (bytes): The blob content to upload
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
         """
         # If the blob already exists, then no need to re-upload
         if ContainerImageRegistryClient.blob_exists(
-                str_or_ref, desc, auth
+                str_or_ref, desc, auth, skip_verify=skip_verify, http=http
             ):
             return
 
@@ -405,12 +458,13 @@ class ContainerImageRegistryClient:
             ref = ContainerImageReference(str_or_ref)
         
         # Construct the API URL for uploading the blob
-        api_base_url = ContainerImageRegistryClient.get_registry_base_url(ref)
-        api_url = f'{api_base_url}/blobs/uploads/{upload_id}?digest={desc.get_digest()}'
+        api_url = f'{upload_url}&digest={desc.get_digest()}'
 
         # Construct the headers for uploading the blob
         headers = {
-            "Content-Type": desc.get_media_type()
+            "Content-Type": "application/octet-stream",
+            "Content-Length": str(desc.get_size()),
+            "Content-Range": f"0-{str(desc.get_size())}"
         }
 
         # Get the matching auth for the image from the docker config JSON
@@ -423,16 +477,26 @@ class ContainerImageRegistryClient:
         
         # Send the request to the distribution registry API
         # If it fails with a 401 response code and auth given, do OAuth dance
-        res = requests.put(api_url, headers=headers, data=content)
+        res = requests.put(
+            api_url,
+            headers=headers,
+            data=content,
+            verify=not skip_verify
+        )
         if res.status_code == 401 and \
             'www-authenticate' in res.headers.keys():
             # Do Oauth dance if basic auth fails
             # Ref: https://distribution.github.io/distribution/spec/auth/token/
             scheme, token = ContainerImageRegistryClient.get_auth_token(
-                res, reg_auth
+                res, reg_auth, skip_verify=skip_verify
             )
             headers['Authorization'] = f'{scheme} {token}'
-            res = requests.post(api_url, headers=headers, data=content)
+            res = requests.post(
+                api_url,
+                headers=headers,
+                data=content,
+                verify=not skip_verify
+            )
         
         # Raise exceptions if any HTTP error response codes are returned
         res.raise_for_status()
@@ -441,7 +505,9 @@ class ContainerImageRegistryClient:
     def get_config(
             str_or_ref: Union[str, ContainerImageReference],
             config_desc: ContainerImageDescriptor,
-            auth: Dict[str, Any]
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
         ) -> Dict[str, Any]:
         """
         Fetches a config blob from the registry API and returns as a dict
@@ -450,6 +516,8 @@ class ContainerImageRegistryClient:
             str_or_ref (Union[str, ContainerImageReference]): An image reference corresponding to the config descriptor
             config_desc (ContainerImageDescriptor): A blob descriptor
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             Dict[str, Any]: The config as a dict
@@ -461,7 +529,7 @@ class ContainerImageRegistryClient:
         
         # Query the blob, get the config response
         res = ContainerImageRegistryClient.query_blob(
-            ref, config_desc, auth
+            ref, config_desc, auth, skip_verify=skip_verify, http=http
         )
 
         # Load the config into a dict and return
@@ -471,14 +539,20 @@ class ContainerImageRegistryClient:
     @staticmethod
     def query_tags(
             str_or_ref: Union[str, ContainerImageReference],
-            auth: Dict[str, Any]
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
         ) -> requests.Response:
         """
         Fetches the list of tags for a reference from the registry API and
         returns as a dict
+        
         Args:
             str_or_ref (Union[str, ContainerImageReference]): An image reference
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
+        
         Returns:
             requests.Response: The registry API tag list response
         """
@@ -489,9 +563,9 @@ class ContainerImageRegistryClient:
 
         # Construct the API URL for querying the image manifest
         api_base_url = ContainerImageRegistryClient.get_registry_base_url(
-            ref
+            ref,
+            http=http
         )
-        image_identifier = ref.get_identifier()
         api_url = f'{api_base_url}/tags/list'
 
         # Construct the headers for querying the image manifest
@@ -509,16 +583,24 @@ class ContainerImageRegistryClient:
 
         # Send the request to the distribution registry API
         # If it fails with a 401 response code and auth given, do OAuth dance
-        res = requests.get(api_url, headers=headers)
+        res = requests.get(
+            api_url,
+            headers=headers,
+            verify=not skip_verify
+        )
         if res.status_code == 401 and \
             'www-authenticate' in res.headers.keys():
             # Do Oauth dance if basic auth fails
             # Ref: https://distribution.github.io/distribution/spec/auth/token/
             scheme, token = ContainerImageRegistryClient.get_auth_token(
-                res, reg_auth
+                res, reg_auth, skip_verify=skip_verify
             )
             headers['Authorization'] = f'{scheme} {token}'
-            res = requests.get(api_url, headers=headers)
+            res = requests.get(
+                api_url,
+                headers=headers,
+                verify=not skip_verify
+            )
 
         # Raise exceptions on error status codes
         res.raise_for_status()
@@ -527,14 +609,20 @@ class ContainerImageRegistryClient:
     @staticmethod
     def list_tags(
             str_or_ref: Union[str, ContainerImageReference],
-            auth: Dict[str, Any]
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
         ) -> Dict[str, Any]:
         """
         Fetches the list of tags for a reference from the registry API and
         returns as a dict
+
         Args:
             str_or_ref (Union[str, ContainerImageReference]): An image reference
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
+        
         Returns:
             Dict[str, Any]: The config as a dict
         """
@@ -545,7 +633,7 @@ class ContainerImageRegistryClient:
 
         # Query the tags, get the tag list response
         res = ContainerImageRegistryClient.query_tags(
-            ref, auth
+            ref, auth, skip_verify=skip_verify, http=http
         )
 
         # Load the tag list into a dict and return
@@ -555,7 +643,9 @@ class ContainerImageRegistryClient:
     @staticmethod
     def query_manifest(
             str_or_ref: Union[str, ContainerImageReference],
-            auth: Dict[str, Any]
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
         ) -> requests.Response:
         """
         Fetches the manifest from the registry API and returns as a requests
@@ -564,6 +654,8 @@ class ContainerImageRegistryClient:
         Args:
             str_or_ref (Union[str, ContainerImageReference]): An image reference
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             requests.Response: The registry API response
@@ -575,7 +667,8 @@ class ContainerImageRegistryClient:
         
         # Construct the API URL for querying the image manifest
         api_base_url = ContainerImageRegistryClient.get_registry_base_url(
-            ref
+            ref,
+            http=http
         )
         image_identifier = ref.get_identifier()
         api_url = f'{api_base_url}/manifests/{image_identifier}'
@@ -595,16 +688,24 @@ class ContainerImageRegistryClient:
         
         # Send the request to the distribution registry API
         # If it fails with a 401 response code and auth given, do OAuth dance
-        res = requests.get(api_url, headers=headers)
+        res = requests.get(
+            api_url,
+            headers=headers,
+            verify=not skip_verify
+        )
         if res.status_code == 401 and \
             'www-authenticate' in res.headers.keys():
             # Do Oauth dance if basic auth fails
             # Ref: https://distribution.github.io/distribution/spec/auth/token/
             scheme, token = ContainerImageRegistryClient.get_auth_token(
-                res, reg_auth
+                res, reg_auth, skip_verify=skip_verify
             )
             headers['Authorization'] = f'{scheme} {token}'
-            res = requests.get(api_url, headers=headers)
+            res = requests.get(
+                api_url,
+                headers=headers,
+                verify=not skip_verify
+            )
 
         # Raise exceptions on error status codes
         res.raise_for_status()
@@ -613,7 +714,9 @@ class ContainerImageRegistryClient:
     @staticmethod
     def get_manifest(
             str_or_ref: Union[str, ContainerImageReference],
-            auth: Dict[str, Any]
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
         ) -> Dict[str, Any]:
         """
         Fetches the manifest from the registry API and returns as a dict
@@ -621,6 +724,8 @@ class ContainerImageRegistryClient:
         Args:
             str_or_ref (Union[str, ContainerImageReference]): An image reference
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             Dict[str, Any]: The manifest loaded into a dict
@@ -632,7 +737,7 @@ class ContainerImageRegistryClient:
         
         # Query the manifest, get the manifest response
         res = ContainerImageRegistryClient.query_manifest(
-            ref, auth
+            ref, auth, skip_verify=skip_verify, http=http
         )
 
         # Load the manifest into a dict and return
@@ -642,16 +747,22 @@ class ContainerImageRegistryClient:
     @staticmethod
     def upload_manifest(
             str_or_ref: Union[str, ContainerImageReference],
-            manifest: Union[ContainerImageManifest, ContainerImageManifestList],
-            auth: Dict[str, Any]
+            manifest: Dict[str, Any],
+            media_type: str,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
         ):
         """
         Uploads a manifest to the registry API underneath the given reference
 
         Args:
             str_or_ref (Union[str, ContainerImageReference]): The image reference under which to push the manifest
-            manifest (Union[ContainerImageManifest, ContainerImageManifestList]): The manifest to upload
+            manifest (Dict[str, Any]): The manifest to upload loaded into a dict
+            media_type (str): The manifest media type as a string
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
         """
         # If given a str, then load as a ref
         ref = str_or_ref
@@ -659,12 +770,15 @@ class ContainerImageRegistryClient:
             ref = ContainerImageReference(str_or_ref)
         
         # Construct the API URL for uploading the manifest
-        api_base_url = ContainerImageRegistryClient.get_registry_base_url(ref)
+        api_base_url = ContainerImageRegistryClient.get_registry_base_url(
+            ref,
+            http=http
+        )
         api_url = f'{api_base_url}/manifests/{ref.get_identifier()}'
 
         # Construct the headers for uploading the manifest
         headers = {
-            "Content-Type": manifest.get_media_type()
+            "Content-Type": media_type
         }
 
         # Get the matching auth for the image from the docker config JSON
@@ -677,16 +791,30 @@ class ContainerImageRegistryClient:
         
         # Send the request to the distribution registry API
         # If it fails with a 401 response code and auth given, do OAuth dance
-        res = requests.put(api_url, headers=headers, data=manifest.__json__())
+        res = requests.put(
+            api_url,
+            headers=headers,
+            data=json.dumps(
+                manifest, indent=3, sort_keys=False
+            ).encode('utf-8'),
+            verify=not skip_verify
+        )
         if res.status_code == 401 and \
             'www-authenticate' in res.headers.keys():
             # Do Oauth dance if basic auth fails
             # Ref: https://distribution.github.io/distribution/spec/auth/token/
             scheme, token = ContainerImageRegistryClient.get_auth_token(
-                res, reg_auth
+                res, reg_auth, skip_verify=skip_verify
             )
             headers['Authorization'] = f'{scheme} {token}'
-            res = requests.post(api_url, headers=headers, data=manifest.__json__())
+            res = requests.post(
+                api_url,
+                headers=headers,
+                data=json.dumps(
+                    manifest, indent=3, sort_keys=False
+                ).encode('utf-8'),
+                verify=not skip_verify
+            )
         
         # Raise exceptions if any HTTP error response codes are returned
         res.raise_for_status()
@@ -694,7 +822,9 @@ class ContainerImageRegistryClient:
     @staticmethod
     def get_digest(
             str_or_ref: Union[str, ContainerImageReference],
-            auth: Dict[str, Any]
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
         ) -> str:
         """
         Fetches the digest from the registry API
@@ -702,6 +832,8 @@ class ContainerImageRegistryClient:
         Args:
             str_or_ref (Union[str, ContainerImageReference]): An image reference
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             str: The image digest
@@ -713,7 +845,7 @@ class ContainerImageRegistryClient:
         
         # Query the manifest, get the manifest response
         res = ContainerImageRegistryClient.query_manifest(
-            ref, auth
+            ref, auth, skip_verify=skip_verify, http=http
         )
 
         # Load the digest header if given, otherwise compute the digest
@@ -738,7 +870,9 @@ class ContainerImageRegistryClient:
     @staticmethod
     def delete(
             str_or_ref: Union[str, ContainerImageReference],
-            auth: Dict[str, Any]
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
         ):
         """
         Deletes the reference from the registry using the registry API
@@ -746,6 +880,8 @@ class ContainerImageRegistryClient:
         Args:
             str_or_ref (Union[str, ContainerImage]): An image reference
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
         """
         # If given a str, then load as a ref
         ref = str_or_ref
@@ -754,7 +890,8 @@ class ContainerImageRegistryClient:
         
         # Construct the API URL for querying the image manifest
         api_base_url = ContainerImageRegistryClient.get_registry_base_url(
-            ref
+            ref,
+            http=http
         )
         image_identifier = ref.get_identifier()
         api_url = f'{api_base_url}/manifests/{image_identifier}'
@@ -772,16 +909,24 @@ class ContainerImageRegistryClient:
         
         # Send the request to the distribution registry API
         # If it fails with a 401 response code and auth given, do OAuth dance
-        res = requests.delete(api_url, headers=headers)
+        res = requests.delete(
+            api_url,
+            headers=headers,
+            verify=not skip_verify
+        )
         if res.status_code == 401 and \
             'www-authenticate' in res.headers.keys():
             # Do Oauth dance if basic auth fails
             # Ref: https://distribution.github.io/distribution/spec/auth/token/
             scheme, token = ContainerImageRegistryClient.get_auth_token(
-                res, reg_auth
+                res, reg_auth, skip_verify=skip_verify
             )
             headers['Authorization'] = f'{scheme} {token}'
-            res = requests.delete(api_url, headers=headers)
+            res = requests.delete(
+                api_url,
+                headers=headers,
+                verify=not skip_verify
+            )
 
         # Raise exceptions on error status codes
         res.raise_for_status()
