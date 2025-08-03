@@ -11,6 +11,8 @@ import requests
 import urllib
 from image.descriptor   import  ContainerImageDescriptor
 from image.errors       import  ContainerImageError
+from image.manifest     import  ContainerImageManifest
+from image.manifestlist import  ContainerImageManifestList
 from image.mediatypes   import  DOCKER_V2S2_MEDIA_TYPE, \
                                 DOCKER_V2S2_LIST_MEDIA_TYPE, \
                                 OCI_INDEX_MEDIA_TYPE, \
@@ -234,7 +236,207 @@ class ContainerImageRegistryClient:
         # Raise exceptions on error status codes
         res.raise_for_status()
         return res
-    
+
+    @staticmethod
+    def get_blob(
+            str_or_ref: Union[str, ContainerImageReference],
+            desc: ContainerImageDescriptor,
+            auth: Dict[str, Any]
+        ) -> bytes:
+        """
+        Fetches a blob from the registry API and returns as bytes
+
+        Args:
+            str_or_ref (Union[str, ContainerImageReference]): The reference corresponding to the blob descriptor
+            desc (ContainerImageDescriptor): A blob descriptor
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+
+        Returns:
+            bytes: The blob as bytes
+        """
+        # If given a str, then load as a ref
+        ref = str_or_ref
+        if isinstance(str_or_ref, str):
+            ref = ContainerImageReference(str_or_ref)
+
+        # Query the blob and capture the response
+        res = ContainerImageRegistryClient.query_blob(
+            ref, desc, auth
+        )
+
+        # Load the blob content and return
+        return res.content
+
+    @staticmethod
+    def initialize_upload(
+            str_or_ref: Union[str, ContainerImageReference],
+            auth: Dict[str, Any]
+        ) -> str:
+        """
+        Initializes a blob upload and returns the upload UUID
+
+        Args:
+            str_or_ref (Union[str, ContainerImageReference]): A reference under which to upload the blob
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+        
+        Returns:
+            str: The blob upload UUID
+        """
+        # If given a str, then load as a ref
+        ref = str_or_ref
+        if isinstance(str_or_ref, str):
+            ref = ContainerImageReference(str_or_ref)
+        
+        # Construct the API URL for initializing the blob upload
+        api_base_url = ContainerImageRegistryClient.get_registry_base_url(ref)
+        api_url = f'{api_base_url}/blobs/uploads/'
+
+        # Construct the headers for querying the image manifest
+        headers = {}
+
+        # Get the matching auth for the image from the docker config JSON
+        reg_auth, found = ContainerImageRegistryClient.get_registry_auth(
+            ref,
+            auth
+        )
+        if found:
+            headers['Authorization'] = f'Basic {reg_auth}'
+        
+        # Send the request to the distribution registry API
+        # If it fails with a 401 response code and auth given, do OAuth dance
+        res = requests.post(api_url, headers=headers)
+        if res.status_code == 401 and \
+            'www-authenticate' in res.headers.keys():
+            # Do Oauth dance if basic auth fails
+            # Ref: https://distribution.github.io/distribution/spec/auth/token/
+            scheme, token = ContainerImageRegistryClient.get_auth_token(
+                res, reg_auth
+            )
+            headers['Authorization'] = f'{scheme} {token}'
+            res = requests.post(api_url, headers=headers)
+
+        # Extract the upload UUID from the request response
+        res.raise_for_status()
+        return res.headers["Docker-Upload-UUID"]
+
+    @staticmethod
+    def blob_exists(
+            str_or_ref: Union[str, ContainerImageReference],
+            desc: ContainerImageDescriptor,
+            auth: Dict[str, Any]
+        ) -> bool:
+        """
+        Queries the registry API for whether a blob exists before uploading
+
+        Args:
+            str_or_ref (Union[str, ContainerImageReference]): An image reference under which to upload the blob
+            desc (ContainerImageDescriptor): A blob descriptor
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+        
+        Returns:
+            bool: Whether the blob already exists in the registry
+        """
+        # If given a str, then load as a ref
+        ref = str_or_ref
+        if isinstance(str_or_ref, str):
+            ref = ContainerImageReference(str_or_ref)
+        
+        # Construct the API URL for querying for existence of the blob
+        api_base_url = ContainerImageRegistryClient.get_registry_base_url(ref)
+        api_url = f'{api_base_url}/blobs/{desc.get_digest()}'
+
+        # Construct the headers for querying the blob
+        headers = {
+            "Content-Type": desc.get_media_type()
+        }
+
+        # Get the matching auth for the image from the docker config JSON
+        reg_auth, found = ContainerImageRegistryClient.get_registry_auth(
+            ref,
+            auth
+        )
+        if found:
+            headers['Authorization'] = f'Basic {reg_auth}'
+        
+        # Send the request to the distribution registry API
+        # If it fails with a 401 response code and auth given, do OAuth dance
+        res = requests.head(api_url, headers=headers)
+        if res.status_code == 401 and \
+            'www-authenticate' in res.headers.keys():
+            # Do Oauth dance if basic auth fails
+            # Ref: https://distribution.github.io/distribution/spec/auth/token/
+            scheme, token = ContainerImageRegistryClient.get_auth_token(
+                res, reg_auth
+            )
+            headers['Authorization'] = f'{scheme} {token}'
+            res = requests.post(api_url, headers=headers)
+
+        # Return true if a 200 response is returned
+        # Ref: https://distribution.github.io/distribution/spec/api/#existing-layers
+        return res.status_code == 200
+
+    @staticmethod
+    def upload_blob(
+            str_or_ref: Union[str, ContainerImageReference],
+            upload_id: str,
+            desc: ContainerImageDescriptor,
+            content: bytes,
+            auth: Dict[str, Any]
+        ):
+        """
+        Uploads a blob to the registry API underneath the given reference
+
+        Args:
+            str_or_ref (Union[str, ContainerImageReference]): The reference under which to upload the blob
+            upload_id (str): The UUID of the upload, get from initialize_upload
+            desc (ContainerImageDescriptor): A blob descriptor
+            content (bytes): The blob content to upload
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+        """
+        # If the blob already exists, then no need to re-upload
+        if ContainerImageRegistryClient.blob_exists(
+                str_or_ref, desc, auth
+            ):
+            return
+
+        # If given a str, then load as a ref
+        ref = str_or_ref
+        if isinstance(str_or_ref, str):
+            ref = ContainerImageReference(str_or_ref)
+        
+        # Construct the API URL for uploading the blob
+        api_base_url = ContainerImageRegistryClient.get_registry_base_url(ref)
+        api_url = f'{api_base_url}/blobs/uploads/{upload_id}?digest={desc.get_digest()}'
+
+        # Construct the headers for uploading the blob
+        headers = {
+            "Content-Type": desc.get_media_type()
+        }
+
+        # Get the matching auth for the image from the docker config JSON
+        reg_auth, found = ContainerImageRegistryClient.get_registry_auth(
+            ref,
+            auth
+        )
+        if found:
+            headers['Authorization'] = f'Basic {reg_auth}'
+        
+        # Send the request to the distribution registry API
+        # If it fails with a 401 response code and auth given, do OAuth dance
+        res = requests.put(api_url, headers=headers, data=content)
+        if res.status_code == 401 and \
+            'www-authenticate' in res.headers.keys():
+            # Do Oauth dance if basic auth fails
+            # Ref: https://distribution.github.io/distribution/spec/auth/token/
+            scheme, token = ContainerImageRegistryClient.get_auth_token(
+                res, reg_auth
+            )
+            headers['Authorization'] = f'{scheme} {token}'
+            res = requests.post(api_url, headers=headers, data=content)
+        
+        # Raise exceptions if any HTTP error response codes are returned
+        res.raise_for_status()
+
     @staticmethod
     def get_config(
             str_or_ref: Union[str, ContainerImageReference],
@@ -246,7 +448,7 @@ class ContainerImageRegistryClient:
 
         Args:
             str_or_ref (Union[str, ContainerImageReference]): An image reference corresponding to the config descriptor
-            desc (ContainerImageDescriptor): A blob descriptor
+            config_desc (ContainerImageDescriptor): A blob descriptor
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
 
         Returns:
@@ -257,12 +459,12 @@ class ContainerImageRegistryClient:
         if isinstance(str_or_ref, str):
             ref = ContainerImageReference(str_or_ref)
         
-        # Query the blob, get the manifest response
+        # Query the blob, get the config response
         res = ContainerImageRegistryClient.query_blob(
             ref, config_desc, auth
         )
 
-        # Load the manifest into a dict and return
+        # Load the config into a dict and return
         config = res.json()
         return config
 
@@ -437,6 +639,58 @@ class ContainerImageRegistryClient:
         manifest = res.json()
         return manifest
     
+    @staticmethod
+    def upload_manifest(
+            str_or_ref: Union[str, ContainerImageReference],
+            manifest: Union[ContainerImageManifest, ContainerImageManifestList],
+            auth: Dict[str, Any]
+        ):
+        """
+        Uploads a manifest to the registry API underneath the given reference
+
+        Args:
+            str_or_ref (Union[str, ContainerImageReference]): The image reference under which to push the manifest
+            manifest (Union[ContainerImageManifest, ContainerImageManifestList]): The manifest to upload
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+        """
+        # If given a str, then load as a ref
+        ref = str_or_ref
+        if isinstance(str_or_ref, str):
+            ref = ContainerImageReference(str_or_ref)
+        
+        # Construct the API URL for uploading the manifest
+        api_base_url = ContainerImageRegistryClient.get_registry_base_url(ref)
+        api_url = f'{api_base_url}/manifests/{ref.get_identifier()}'
+
+        # Construct the headers for uploading the manifest
+        headers = {
+            "Content-Type": manifest.get_media_type()
+        }
+
+        # Get the matching auth for the image from the docker config JSON
+        reg_auth, found = ContainerImageRegistryClient.get_registry_auth(
+            ref,
+            auth
+        )
+        if found:
+            headers['Authorization'] = f'Basic {reg_auth}'
+        
+        # Send the request to the distribution registry API
+        # If it fails with a 401 response code and auth given, do OAuth dance
+        res = requests.put(api_url, headers=headers, data=manifest.__json__())
+        if res.status_code == 401 and \
+            'www-authenticate' in res.headers.keys():
+            # Do Oauth dance if basic auth fails
+            # Ref: https://distribution.github.io/distribution/spec/auth/token/
+            scheme, token = ContainerImageRegistryClient.get_auth_token(
+                res, reg_auth
+            )
+            headers['Authorization'] = f'{scheme} {token}'
+            res = requests.post(api_url, headers=headers, data=manifest.__json__())
+        
+        # Raise exceptions if any HTTP error response codes are returned
+        res.raise_for_status()
+
     @staticmethod
     def get_digest(
             str_or_ref: Union[str, ContainerImageReference],

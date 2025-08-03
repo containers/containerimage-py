@@ -97,7 +97,7 @@ class ContainerImageManifest:
         Returns:
             str: The ContainerImageManifest formatted as a string
         """
-        return json.dumps(self.manifest, indent=2, sort_keys=False)
+        return json.dumps(self.manifest, indent=3, sort_keys=False)
 
     def __json__(self) -> Dict[str, Any]:
         """
