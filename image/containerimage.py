@@ -488,9 +488,140 @@ class ContainerImage(ContainerImageReference):
         # Set the tag in the inspect dict
         if self.is_tag_ref():
             inspect["Tag"] = self.get_identifier()
-        
-        # TODO: Get the RepoTags for the image
         return ContainerImageInspect(inspect)
+
+    def download(
+            self,
+            path: str,
+            auth: Dict[str, Any]
+        ):
+        """
+        Downloads the image onto the filesystem
+
+        Args:
+            path (str): The destination path on the filesystem
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+        """
+        # Get the source manifest or manifests
+        manifest = self.get_manifest(auth=auth)
+        if ContainerImage.is_manifest_list_static(manifest):
+            for entry in manifest.get_entries():
+                # Create a new ContainerImage for each manifest
+                manifest_img = ContainerImage(
+                    f"{self.get_name()}@{entry.get_digest()}"
+                )
+
+                # Download each manifest and save as <digest>.manifest.json
+                arch_manifest = manifest_img.get_manifest(auth)
+                with open(
+                        f"{path}/{entry.get_digest().split(':')[-1]}.manifest.json", 'w'
+                    ) as arch_manifest_file:
+                    arch_manifest_file.write(str(arch_manifest))
+
+                # Download each layer and save as <digest>
+                arch_layer_desc = arch_manifest.get_layer_descriptors()
+                for desc in arch_layer_desc:
+                    layer = ContainerImageRegistryClient.get_layer(self, desc, auth)
+                    with open(
+                            f"{path}/{desc.get_digest().split(':')[-1]}", 'wb'
+                        ) as layer_file:
+                        layer_file.write(layer)
+        else:
+            # Download each layer and save as <digest>
+            layer_desc = manifest.get_layer_descriptors()
+            for desc in layer_desc:
+                layer = ContainerImageRegistryClient.get_layer(self, desc, auth)
+                with open(
+                        f"{path}/{desc.get_digest().split(':')[-1]}", 'wb'
+                    ) as layer_file:
+                    layer_file.write(layer)
+        
+        # Save the top-level manifest as manifest.json
+        with open(f"{path}/manifest.json", 'w') as manifest_file:
+            manifest_file.write(str(manifest))
+
+    def copy(
+            self,
+            dest: Union[str, ContainerImageReference],
+            auth: Dict[str, Any]
+        ):
+        """
+        Copies the image to a new registry
+
+        Args:
+            dest (Union[str, ContainerImageReference]): The destination location to copy the image
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+        """
+        # Initialize a copy in the destination registry
+        upload_id = ContainerImageRegistryClient.initialize_upload(dest, auth)
+        
+        # Get the source manifest or manifests
+        manifest = self.get_manifest(auth=auth)
+        if ContainerImage.is_manifest_list_static(manifest):
+            for entry in manifest.get_entries():
+                # Create a new ContainerImage for each manifest
+                manifest_img = ContainerImage(
+                    f"{self.get_name()}@{entry.get_digest()}"
+                )
+
+                # Download each manifest
+                arch_manifest = manifest_img.get_manifest(auth)
+
+                # Download each layer
+                arch_layer_desc = arch_manifest.get_layer_descriptors()
+                for desc in arch_layer_desc:
+                    layer = ContainerImageRegistryClient.get_blob(self, desc, auth)
+
+                    # Upload each layer
+                    ContainerImageRegistryClient.upload_blob(
+                        dest,
+                        upload_id,
+                        desc,
+                        layer,
+                        auth
+                    )
+                
+                # Download and upload each config
+                arch_config_desc = arch_manifest.get_config_descriptor()
+                arch_config = ContainerImageRegistryClient.get_blob(
+                    self,
+                    arch_config_desc,
+                    auth
+                )
+                ContainerImageRegistryClient.upload_blob(
+                    dest,
+                    upload_id,
+                    arch_config_desc,
+                    arch_config
+                )
+
+                # Upload each manifest
+                ContainerImageRegistryClient.upload_manifest(
+                    dest,
+                    arch_manifest,
+                    auth
+                )
+        else:
+            # Download each layer and save as <digest>
+            layer_desc = manifest.get_layer_descriptors()
+            for desc in layer_desc:
+                layer = ContainerImageRegistryClient.get_layer(self, desc, auth)
+
+                # Upload each layer
+                ContainerImageRegistryClient.upload_blob(
+                    dest,
+                    upload_id,
+                    desc,
+                    layer,
+                    auth
+                )
+        
+        # Upload the top-level manifest as manifest.json
+        ContainerImageRegistryClient.upload_manifest(
+            dest,
+            manifest,
+            auth
+        )
 
     def delete(self, auth: Dict[str, Any]):
         """
