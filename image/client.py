@@ -33,6 +33,11 @@ DEFAULT_REQUEST_MANIFEST_MEDIA_TYPES = [
 The default accepted mediaTypes for querying manifests
 """
 
+DEFAULT_CHUNK_SIZE = 16777216
+"""
+The default chunk size for chunked blob uploads, 16MB
+"""
+
 class ContainerImageRegistryClient:
     """
     A CNCF distribution registry API client
@@ -425,17 +430,17 @@ class ContainerImageRegistryClient:
         return res.status_code == 200
 
     @staticmethod
-    def upload_blob(
+    def _upload_blob_monolithic(
             str_or_ref: Union[str, ContainerImageReference],
             upload_url: str,
             desc: ContainerImageDescriptor,
             content: bytes,
             auth: Dict[str, Any],
-            skip_verify: bool=False,
-            http: bool=False
+            skip_verify: bool=False
         ):
         """
         Uploads a blob to the registry API underneath the given reference
+        in a single request
 
         Args:
             str_or_ref (Union[str, ContainerImageReference]): The reference under which to upload the blob
@@ -444,14 +449,7 @@ class ContainerImageRegistryClient:
             content (bytes): The blob content to upload
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
-            http (bool): Insecure, whether to use HTTP (not HTTPs)
         """
-        # If the blob already exists, then no need to re-upload
-        if ContainerImageRegistryClient.blob_exists(
-                str_or_ref, desc, auth, skip_verify=skip_verify, http=http
-            ):
-            return
-
         # If given a str, then load as a ref
         ref = str_or_ref
         if isinstance(str_or_ref, str):
@@ -500,6 +498,154 @@ class ContainerImageRegistryClient:
         
         # Raise exceptions if any HTTP error response codes are returned
         res.raise_for_status()
+    
+    @staticmethod
+    def _upload_blob_chunked(
+            str_or_ref: Union[str, ContainerImageReference],
+            upload_url: str,
+            desc: ContainerImageDescriptor,
+            content: bytes,
+            chunk_size: int=DEFAULT_CHUNK_SIZE,
+            auth: Dict[str, Any]={},
+            skip_verify: bool=False
+        ):
+        """
+        Uploads a blob to the registry API underneath the given reference
+        in a sequence of chunks
+
+        Args:
+            str_or_ref (Union[str, ContainerImageReference]): The reference under which to upload the blob
+            upload_url (str): The URL of the upload, get from initialize_upload
+            desc (ContainerImageDescriptor): A blob descriptor
+            content (bytes): The blob content to upload
+            chunk_size (int): The size of the chunks to upload
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+        """
+        # If given a str, then load as a ref
+        ref = str_or_ref
+        if isinstance(str_or_ref, str):
+            ref = ContainerImageReference(str_or_ref)
+        
+        # Construct the headers for uploading the blob
+        headers = {}
+
+        # Get the matching auth for the image from the docker config JSON
+        reg_auth, found = ContainerImageRegistryClient.get_registry_auth(
+            ref,
+            auth
+        )
+        if found:
+            headers['Authorization'] = f'Basic {reg_auth}'
+        
+        # Send the request to the distribution registry API
+        # If it fails with a 401 response code and auth given, do OAuth dance
+        chunk_upload_url = upload_url
+        for i in range(0, len(content), chunk_size):
+            upper = min(i + chunk_size, len(content))
+            chunk = content[i:upper]
+            headers["Content-Type"] = "application/octet-stream"
+            headers["Content-Length"] = str(len(chunk))
+            headers["Content-Range"] = f"{i}-{upper - 1}"
+            if upper == len(content):
+                fin_api_url = f'{chunk_upload_url}&digest={desc.get_digest()}'
+                res = requests.put(
+                    fin_api_url,
+                    headers=headers,
+                    data=chunk,
+                    verify=not skip_verify
+                )
+                if res.status_code == 401 and \
+                    'www-authenticate' in res.headers.keys():
+                    # Do Oauth dance if basic auth fails
+                    # Ref: https://distribution.github.io/distribution/spec/auth/token/
+                    scheme, token = ContainerImageRegistryClient.get_auth_token(
+                        res, reg_auth, skip_verify=skip_verify
+                    )
+                    headers['Authorization'] = f'{scheme} {token}'
+                    res = requests.put(
+                        fin_api_url,
+                        headers=headers,
+                        data=chunk,
+                        verify=not skip_verify
+                    )
+            else:
+                res = requests.patch(
+                    chunk_upload_url,
+                    headers=headers,
+                    data=chunk,
+                    verify=not skip_verify
+                )
+                if res.status_code == 401 and \
+                    'www-authenticate' in res.headers.keys():
+                    # Do Oauth dance if basic auth fails
+                    # Ref: https://distribution.github.io/distribution/spec/auth/token/
+                    scheme, token = ContainerImageRegistryClient.get_auth_token(
+                        res, reg_auth, skip_verify=skip_verify
+                    )
+                    headers['Authorization'] = f'{scheme} {token}'
+                    res = requests.patch(
+                        chunk_upload_url,
+                        headers=headers,
+                        data=chunk,
+                        verify=not skip_verify
+                    )
+                chunk_upload_url = res.headers.get("Location")
+            
+            # Raise exceptions if any HTTP error response codes are returned
+            res.raise_for_status()
+
+    @staticmethod
+    def upload_blob(
+            str_or_ref: Union[str, ContainerImageReference],
+            upload_url: str,
+            desc: ContainerImageDescriptor,
+            content: bytes,
+            chunked: bool=True,
+            chunk_size: int=DEFAULT_CHUNK_SIZE,
+            auth: Dict[str, Any]={},
+            skip_verify: bool=False,
+            http: bool=False
+        ):
+        """
+        Uploads a blob to the registry API underneath the given reference
+
+        Args:
+            str_or_ref (Union[str, ContainerImageReference]): The reference under which to upload the blob
+            upload_url (str): The URL of the upload, get from initialize_upload
+            desc (ContainerImageDescriptor): A blob descriptor
+            content (bytes): The blob content to upload
+            chunked (bool): Whether to upload the blob in chunks
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
+        """
+        # If the blob already exists, then no need to re-upload
+        if ContainerImageRegistryClient.blob_exists(
+                str_or_ref, desc, auth, skip_verify=skip_verify, http=http
+            ):
+            return
+        
+        # Upload either monolithically or chunked based on user preferences
+        if chunked:
+            ContainerImageRegistryClient._upload_blob_chunked(
+                str_or_ref,
+                upload_url,
+                desc,
+                content,
+                chunk_size=chunk_size,
+                auth=auth,
+                skip_verify=skip_verify
+            )
+        else:
+            ContainerImageRegistryClient._upload_blob_monolithic(
+                str_or_ref,
+                upload_url,
+                desc,
+                content,
+                auth,
+                skip_verify
+            )
 
     @staticmethod
     def get_config(
