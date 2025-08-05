@@ -776,7 +776,7 @@ class ContainerImage(ContainerImageReference):
                         layer_upload_url,
                         desc,
                         layer,
-                        auth,
+                        auth=auth,
                         skip_verify=dest_skip_verify,
                         http=dest_http
                     )
@@ -801,7 +801,7 @@ class ContainerImage(ContainerImageReference):
                     config_upload_url,
                     arch_config_desc,
                     arch_config,
-                    auth,
+                    auth=auth,
                     skip_verify=dest_skip_verify,
                     http=dest_http
                 )
@@ -837,7 +837,7 @@ class ContainerImage(ContainerImageReference):
                     layer_upload_url,
                     desc,
                     layer,
-                    auth,
+                    auth=auth,
                     skip_verify=dest_skip_verify,
                     http=dest_http
                 )
