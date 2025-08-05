@@ -63,7 +63,13 @@ class ContainerImageManifestList:
             size += entry.get_size()
         return size
 
-    def get_manifests(self, name: str, auth: Dict[str, Any]) -> List[
+    def get_manifests(
+            self,
+            name: str,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> List[
             ContainerImageManifest
         ]:
         """
@@ -72,6 +78,8 @@ class ContainerImageManifestList:
         Args:
             name (str): A valid image name, the name of the manifest
             auth (Dict[str, Any]): A valid docker config JSON dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             List[ContainerImageManifest]: The arch manifests
@@ -91,7 +99,7 @@ class ContainerImageManifestList:
 
             # Get the arch image's manifest from the registry, append to list
             manifest_dict = ContainerImageRegistryClient.get_manifest(
-                ref, auth
+                ref, auth, skip_verify=skip_verify, http=http
             )
             manifest = ContainerImageManifest(manifest_dict)
             manifests.append(manifest)
@@ -99,7 +107,13 @@ class ContainerImageManifestList:
         # Return the list of manifests
         return manifests
 
-    def get_layer_descriptors(self, name: str, auth: Dict[str, Any]) -> List[
+    def get_layer_descriptors(
+            self,
+            name: str,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> List[
             ContainerImageDescriptor
         ]:
         """
@@ -109,19 +123,29 @@ class ContainerImageManifestList:
         Args:
             name (str): A valid image name, the name of the manifest
             auth (Dict[str, Any]): A valid docker config JSON dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             int: The list of layer descriptors across each of the manifests
         """
         layers = []
-        manifests = self.get_manifests(name, auth)
+        manifests = self.get_manifests(
+            name, auth, skip_verify=skip_verify, http=http
+        )
         for manifest in manifests:
             layers.extend(
                 manifest.get_layer_descriptors()
             )
         return layers
 
-    def get_config_descriptors(self, name: str, auth: Dict[str, Any]) -> List[
+    def get_config_descriptors(
+            self,
+            name: str,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> List[
             ContainerImageDescriptor
         ]:
         """
@@ -131,12 +155,16 @@ class ContainerImageManifestList:
         Args:
             name (str): A valid image name, the name of the manifest
             auth (Dict[str, Any]): A valid docker config JSON dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             List[ContainerImageDescriptor]: The list of config descriptors across each of the manifests
         """
         configs = []
-        manifests = self.get_manifests(name, auth)
+        manifests = self.get_manifests(
+            name, auth, skip_verify=skip_verify, http=http
+        )
         for manifest in manifests:
             configs.append(manifest.get_config_descriptor())
         return configs
@@ -150,13 +178,21 @@ class ContainerImageManifestList:
         """
         return str(self.manifest_list.get("mediaType"))
 
-    def get_size(self, name: str, auth: Dict[str, Any]) -> int:
+    def get_size(
+            self,
+            name: str,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> int:
         """
         Calculates the size of the image using the distribution registry API
 
         Args:
             name (str): A valid image name, the name of the manifest
             auth (Dict[str, Any]): A valid docker config JSON dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             int: The size of the manifest list in bytes
@@ -181,7 +217,7 @@ class ContainerImageManifestList:
 
             # Get the arch image's manifest from the registry
             manifest_dict = ContainerImageRegistryClient.get_manifest(
-                ref, auth
+                ref, auth, skip_verify=skip_verify, http=http
             )
             manifest = ContainerImageManifest(manifest_dict)
 
@@ -217,7 +253,7 @@ class ContainerImageManifestList:
         Returns:
             str: The ContainerImageManifestListV2S2 formatted as a string
         """
-        return json.dumps(self.manifest_list, indent=2, sort_keys=False)
+        return json.dumps(self.manifest_list, indent=3, sort_keys=False)
 
     def __json__(self) -> Dict[str, Any]:
         """

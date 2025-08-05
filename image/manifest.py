@@ -4,7 +4,7 @@ v2s2 and OCI specifications for their respective manifest implementations
 """
 
 import json
-from typing             import  Dict, Any, List, Type
+from typing             import  Dict, Any, List
 from image.descriptor   import  ContainerImageDescriptor
 
 class ContainerImageManifest:
@@ -97,7 +97,7 @@ class ContainerImageManifest:
         Returns:
             str: The ContainerImageManifest formatted as a string
         """
-        return json.dumps(self.manifest, indent=2, sort_keys=False)
+        return json.dumps(self.manifest, indent=3, sort_keys=False)
 
     def __json__(self) -> Dict[str, Any]:
         """
