@@ -997,9 +997,7 @@ class ContainerImageList:
             str: List size in bytes formatted to nearest unit (ex. "1.23 MB")
         """
         return ByteUnit.format_size_bytes(
-            self.get_size(auth),
-            skip_verify=skip_verify,
-            http=http
+            self.get_size(auth, skip_verify=skip_verify, http=http)
         )
     
     def delete(

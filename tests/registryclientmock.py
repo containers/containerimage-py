@@ -103,7 +103,12 @@ MOCK_REGISTRY_CREDS = {
 }
 
 # Mock the ContainerImageRegistryClient.get_manifest function
-def mock_get_manifest(ref_or_img: Union[str, ContainerImage], auth: Dict[str, Any]) -> Type[
+def mock_get_manifest(
+        ref_or_img: Union[str, ContainerImage],
+        auth: Dict[str, Any],
+        http: bool=False,
+        skip_verify: bool=False
+    ) -> Type[
         ContainerImageManifestV2S2
     ]:
     """
@@ -156,7 +161,9 @@ def mock_get_manifest(ref_or_img: Union[str, ContainerImage], auth: Dict[str, An
 def mock_get_config(
         ref_or_img: Union[str, ContainerImage],
         config_desc: ContainerImageDescriptor,
-        auth: Dict[str, Any]
+        auth: Dict[str, Any],
+        http: bool=False,
+        skip_verify: bool=False
     ) -> Dict[str, Any]:
     """
     Mocks the ContainerImageRegistryClient.get_config function
@@ -173,7 +180,12 @@ def mock_get_config(
     else:
         raise Exception(f"Unmocked reference: {ref_or_img}")
 
-def mock_get_digest(ref_or_img: Union[str, ContainerImage], auth: Dict[str, Any]) -> str:
+def mock_get_digest(
+        ref_or_img: Union[str, ContainerImage],
+        auth: Dict[str, Any],
+        http: bool=False,
+        skip_verify: bool=False
+    ) -> str:
     """
     Mocks the ContainerImageRegistryClient.get_digest function
 
@@ -189,7 +201,12 @@ def mock_get_digest(ref_or_img: Union[str, ContainerImage], auth: Dict[str, Any]
     else:
         raise Exception(f"Unmocked reference: {ref_or_img}")
 
-def mock_list_tags(ref_or_img: Union[str, ContainerImage], auth: Dict[str, Any]) -> Dict[str, Any]:
+def mock_list_tags(
+        ref_or_img: Union[str, ContainerImage],
+        auth: Dict[str, Any],
+        http: bool=False,
+        skip_verify: bool=False
+    ) -> Dict[str, Any]:
     """
     Mocks the ContainerImageRegistryClient.list_tags function
 

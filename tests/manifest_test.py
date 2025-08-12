@@ -121,7 +121,7 @@ def test_container_image_manifest_get_size():
     assert size == expected_size
 
 def test_container_image_manifest_to_string():
-    manifest_str = json.dumps(OCI_MANIFEST_EXAMPLE, indent=2, sort_keys=False)
+    manifest_str = json.dumps(OCI_MANIFEST_EXAMPLE, indent=3, sort_keys=False)
     manifest = ContainerImageManifest(OCI_MANIFEST_EXAMPLE)
     assert str(manifest) == manifest_str
 
