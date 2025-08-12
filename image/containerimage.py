@@ -95,7 +95,9 @@ class ContainerImage(ContainerImageReference):
                 ContainerImageManifestOCI,
                 ContainerImageIndexOCI
             ],
-            auth: Dict[str, Any]
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
         ) -> Union[
             ContainerImageManifestV2S2,
             ContainerImageManifestOCI
@@ -109,6 +111,8 @@ class ContainerImage(ContainerImageReference):
             ref (ContainerImageReference): The image reference corresponding to the manifest
             manifest (Union[ContainerImageManifestV2S2,ContainerImageManifestListV2S2,ContainerImageManifestOCI,ContainerImageIndexOCI]): The manifest object, generally from get_manifest method
             auth (Dict[str, Any]): A valid docker config JSON with auth into the ref's registry
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
         
         Returns:
             Union[ContainerImageManifestV2S2,ContainerImageManifestOCI]: The manifest response from the registry API
@@ -136,7 +140,11 @@ class ContainerImage(ContainerImageReference):
             host_ref = ContainerImage(
                 f"{ref.get_name()}@{host_entry_digest}"
             )
-            host_manifest = host_ref.get_manifest(auth=auth)
+            host_manifest = host_ref.get_manifest(
+                auth=auth,
+                skip_verify=skip_verify,
+                http=http
+            )
         
         # Return the manifest matching the host platform
         return host_manifest
@@ -150,7 +158,9 @@ class ContainerImage(ContainerImageReference):
                 ContainerImageManifestOCI,
                 ContainerImageIndexOCI
             ],
-            auth: Dict[str, Any]
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
         ) -> ContainerImageConfig:
         """
         Given an image's manifest, this static method fetches that image's
@@ -162,6 +172,8 @@ class ContainerImage(ContainerImageReference):
             ref (ContainerImageReference): The image reference corresponding to the manifest
             manifest (Union[ContainerImageManifestV2S2,ContainerImageManifestListV2S2,ContainerImageManifestOCI,ContainerImageIndexOCI]): The manifest object, generally from get_manifest method
             auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
         
         Returns:
             ContainerImageConfig: The config for this image
@@ -171,7 +183,7 @@ class ContainerImage(ContainerImageReference):
         """
         # If manifest list, get the manifest matching the host platform
         manifest = ContainerImage.get_host_platform_manifest_static(
-            ref, manifest, auth
+            ref, manifest, auth, skip_verify=skip_verify, http=http
         )
         
         # Get the image's config
@@ -179,7 +191,9 @@ class ContainerImage(ContainerImageReference):
             ContainerImageRegistryClient.get_config(
                 ref,
                 manifest.get_config_descriptor(),
-                auth=auth
+                auth=auth,
+                skip_verify=skip_verify,
+                http=http
             )
         )
 
@@ -207,22 +221,39 @@ class ContainerImage(ContainerImageReference):
         """
         return ContainerImage.validate_static(self.ref)
     
-    def get_digest(self, auth: Dict[str, Any]) -> str:
+    def get_digest(
+            self,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> str:
         """
         Parses the digest from the reference if digest reference, or fetches
         it from the registry if tag reference
 
         Args:
             auth (Dict[str, Any]): A valid docker config JSON
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             str: The image digest
         """
         if self.is_digest_ref():
             return self.get_identifier()
-        return ContainerImageRegistryClient.get_digest(self, auth)
+        return ContainerImageRegistryClient.get_digest(
+            self,
+            auth,
+            skip_verify=skip_verify,
+            http=http
+        )
     
-    def get_platforms(self, auth: Dict[str, Any]) -> List[
+    def get_platforms(
+            self,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> List[
             ContainerImagePlatform
         ]:
         """
@@ -231,6 +262,8 @@ class ContainerImage(ContainerImageReference):
 
         Args:
             auth (Dict[str, Any]): A valid docker config JSON
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             List[ContainerImagePlatform]: The supported platforms
@@ -243,7 +276,9 @@ class ContainerImage(ContainerImageReference):
             config_dict = ContainerImageRegistryClient.get_config(
                 self,
                 config_desc,
-                auth
+                auth,
+                skip_verify=skip_verify,
+                http=http
             )
             config = ContainerImageConfig(config_dict)
             platforms = [ config.get_platform() ]
@@ -252,7 +287,12 @@ class ContainerImage(ContainerImageReference):
                 platforms.append(entry.get_platform())
         return platforms
 
-    def get_manifest(self, auth: Dict[str, Any]) -> Union[
+    def get_manifest(
+            self,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> Union[
             ContainerImageManifestV2S2,
             ContainerImageManifestListV2S2,
             ContainerImageManifestOCI,
@@ -263,6 +303,8 @@ class ContainerImage(ContainerImageReference):
 
         Args:
             auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             Union[ContainerImageManifestV2S2,ContainerImageManifestListV2S2,ContainerImageManifestOCI,ContainerImageIndexOCI]: The manifest or manifest list response from the registry API
@@ -274,10 +316,17 @@ class ContainerImage(ContainerImageReference):
         
         # Use the container image registry client to get the manifest
         return ContainerImageManifestFactory.create(
-            ContainerImageRegistryClient.get_manifest(self, auth)
+            ContainerImageRegistryClient.get_manifest(
+                self, auth, skip_verify=skip_verify, http=http
+            )
         )
     
-    def get_host_platform_manifest(self, auth: Dict[str, Any]) -> Union[
+    def get_host_platform_manifest(
+            self,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> Union[
             ContainerImageManifestOCI,
             ContainerImageManifestV2S2
         ]:
@@ -289,6 +338,8 @@ class ContainerImage(ContainerImageReference):
 
         Args:
             auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
         
         Returns:
             Union[ContainerImageManifestV2S2,ContainerImageManifestOCI]: The manifest response from the registry API
@@ -297,16 +348,27 @@ class ContainerImage(ContainerImageReference):
             ContainerImageError: Error if the image is a manifest list without a manifest matching the host platform
         """
         # Get the container image's manifest
-        manifest = self.get_manifest(auth=auth)
+        manifest = self.get_manifest(
+            auth=auth,
+            skip_verify=skip_verify,
+            http=http
+        )
         
         # Return the host platform manifest
         return ContainerImage.get_host_platform_manifest_static(
             self,
             manifest,
-            auth
+            auth,
+            skip_verify=skip_verify,
+            http=http
         )
 
-    def get_config(self, auth: Dict[str, Any]) -> ContainerImageConfig:
+    def get_config(
+            self,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> ContainerImageConfig:
         """
         Fetches the image's config from the distribution registry API.  If the
         image is a manifest list, then it gets the config corresponding to the
@@ -314,6 +376,8 @@ class ContainerImage(ContainerImageReference):
 
         Args:
             auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
         
         Returns:
             ContainerImageConfig: The config for this image
@@ -322,41 +386,64 @@ class ContainerImage(ContainerImageReference):
             ContainerImageError: Error if the image is a manifest list without a manifest matching the host platform
         """
         # Get the image's manifest
-        manifest = self.get_manifest(auth=auth)
+        manifest = self.get_manifest(
+            auth=auth,
+            skip_verify=skip_verify,
+            http=http
+        )
 
         # Use the image's manifest to get the image's config
         config = ContainerImage.get_config_static(
-            self, manifest, auth
+            self, manifest, auth, skip_verify=skip_verify, http=http
         )
 
         # Return the image's config
         return config
 
-    def list_tags(self, auth: Dict[str, Any]) -> Dict[str, Any]:
+    def list_tags(
+            self,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> Dict[str, Any]:
         """
         Fetches the list of tags for the image from the distribution registry
         API.
+
         Args:
             auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
         
         Returns:
             Dict[str, Any]: The tag list loaded into a dict
         """
-        return ContainerImageRegistryClient.list_tags(self, auth)
+        return ContainerImageRegistryClient.list_tags(
+            self, auth, skip_verify=skip_verify, http=http
+        )
 
-    def exists(self, auth: Dict[str, Any]) -> bool:
+    def exists(
+            self,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> bool:
         """
         Determine if the image reference corresponds to an image in the remote
         registry.
 
         Args:
             auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
         
         Returns:
             bool: Whether the image exists in the registry
         """
         try:
-            ContainerImageRegistryClient.get_manifest(self, auth)
+            ContainerImageRegistryClient.get_manifest(
+                self, auth, skip_verify=skip_verify, http=http
+            )
         except requests.HTTPError as he:
             if he.response.status_code == 404:
                 return False
@@ -364,99 +451,163 @@ class ContainerImage(ContainerImageReference):
                 raise he
         return True
 
-    def is_manifest_list(self, auth: Dict[str, Any]) -> bool:
+    def is_manifest_list(
+            self,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> bool:
         """
         Determine if the image is a manifest list
 
         Args:
             auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             bool: Whether the image is a manifest list or single-arch
         """
-        return ContainerImage.is_manifest_list_static(self.get_manifest(auth))
+        return ContainerImage.is_manifest_list_static(
+            self.get_manifest(auth, skip_verify=skip_verify, http=http)
+        )
 
-    def is_oci(self, auth: Dict[str, Any]) -> bool:
+    def is_oci(
+            self,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> bool:
         """
         Determine if the image is in the OCI format
 
         Args:
             auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
         
         Returns:
             bool: Whether the image is in the OCI format
         """
-        return ContainerImage.is_oci_static(self.get_manifest(auth))
+        return ContainerImage.is_oci_static(
+            self.get_manifest(auth, skip_verify=skip_verify, http=http)
+        )
 
-    def get_media_type(self, auth: Dict[str, Any]) -> str:
+    def get_media_type(
+            self,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> str:
         """
         Gets the image's mediaType from its manifest
 
         Args:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             str: The image's mediaType
         """
-        return self.get_manifest(auth).get_media_type()
+        return self.get_manifest(
+            auth, skip_verify=skip_verify, http=http
+        ).get_media_type()
 
-    def get_size(self, auth: Dict[str, Any]) -> int:
+    def get_size(
+            self,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> int:
         """
         Calculates the size of the image by fetching its manifest metadata
         from the registry.
 
         Args:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             int: The size of the image in bytes
         """
         # Get the manifest and calculate its size
-        manifest = self.get_manifest(auth)
+        manifest = self.get_manifest(auth, skip_verify=skip_verify, http=http)
         if ContainerImage.is_manifest_list_static(manifest):
-            return manifest.get_size(self.get_name(), auth)
+            return manifest.get_size(
+                self.get_name(),
+                auth,
+                skip_verify=skip_verify,
+                http=http
+            )
         else:
             return manifest.get_size()
 
-    def get_size_formatted(self, auth: Dict[str, Any]) -> str:
+    def get_size_formatted(
+            self,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> str:
         """
         Calculates the size of the image by fetching its manifest metadata
         from the registry.  Formats as a human readable string (e.g. 3.14 KB)
 
         Args:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
 
         Returns:
             str: The size of the image in bytes in human readable format (1.25 GB)
         """
-        return ByteUnit.format_size_bytes(self.get_size(auth))
+        return ByteUnit.format_size_bytes(
+            self.get_size(auth, skip_verify=skip_verify, http=http)
+        )
     
-    def inspect(self, auth: Dict[str, Any]) -> ContainerImageInspect:
+    def inspect(
+            self,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> ContainerImageInspect:
         """
         Returns a collection of basic information about the image, equivalent
         to skopeo inspect.
 
         Args:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
         
         Returns:
             ContainerImageInspect: A collection of information about the image
         """
         # Get the image's manifest
-        manifest = self.get_host_platform_manifest(auth=auth)
+        manifest = self.get_host_platform_manifest(
+            auth=auth,
+            skip_verify=skip_verify,
+            http=http
+        )
 
         # Use the image's manifest to get the image's config
         config = ContainerImage.get_config_static(
-            self, manifest, auth
+            self, manifest, auth, skip_verify=skip_verify, http=http
         )
 
         # List the image's tags
-        tags = self.list_tags(auth)
+        tags = self.list_tags(
+            auth,
+            skip_verify=skip_verify,
+            http=http
+        )
 
         # Format the inspect dictionary
         inspect = {
             "Name": self.get_name(),
-            "Digest": self.get_digest(auth=auth),
+            "Digest": self.get_digest(
+                auth=auth, skip_verify=skip_verify, http=http
+            ),
             "RepoTags": tags["tags"],
             # TODO: Implement v2s1 manifest extension - only v2s1 manifests use this value
             "DockerVersion": "",
@@ -488,22 +639,240 @@ class ContainerImage(ContainerImageReference):
         # Set the tag in the inspect dict
         if self.is_tag_ref():
             inspect["Tag"] = self.get_identifier()
-        
-        # TODO: Get the RepoTags for the image
         return ContainerImageInspect(inspect)
 
-    def delete(self, auth: Dict[str, Any]):
+    def download(
+            self,
+            path: str,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ):
+        """
+        Downloads the image onto the filesystem
+
+        Args:
+            path (str): The destination path on the filesystem
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
+        """
+        # Get the source manifest or manifests
+        manifest = self.get_manifest(
+            auth=auth, skip_verify=skip_verify, http=http
+        )
+        if ContainerImage.is_manifest_list_static(manifest):
+            for entry in manifest.get_entries():
+                # Create a new ContainerImage for each manifest
+                manifest_img = ContainerImage(
+                    f"{self.get_name()}@{entry.get_digest()}"
+                )
+
+                # Download each manifest and save as <digest>.manifest.json
+                arch_manifest = manifest_img.get_manifest(
+                    auth, skip_verify=skip_verify, http=http
+                )
+                with open(
+                        f"{path}/{entry.get_digest().split(':')[-1]}.manifest.json", 'w'
+                    ) as arch_manifest_file:
+                    arch_manifest_file.write(str(arch_manifest))
+
+                # Download each layer and save as <digest>
+                arch_layer_desc = arch_manifest.get_layer_descriptors()
+                for desc in arch_layer_desc:
+                    layer = ContainerImageRegistryClient.get_blob(
+                        self,
+                        desc,
+                        auth,
+                        skip_verify=skip_verify,
+                        http=http
+                    )
+                    with open(
+                            f"{path}/{desc.get_digest().split(':')[-1]}", 'wb'
+                        ) as layer_file:
+                        layer_file.write(layer)
+        else:
+            # Download each layer and save as <digest>
+            layer_desc = manifest.get_layer_descriptors()
+            for desc in layer_desc:
+                layer = ContainerImageRegistryClient.get_blob(
+                    self,
+                    desc,
+                    auth,
+                    skip_verify=skip_verify,
+                    http=http
+                )
+                with open(
+                        f"{path}/{desc.get_digest().split(':')[-1]}", 'wb'
+                    ) as layer_file:
+                    layer_file.write(layer)
+        
+        # Save the top-level manifest as manifest.json
+        with open(f"{path}/manifest.json", 'w') as manifest_file:
+            manifest_file.write(str(manifest))
+
+    def copy(
+            self,
+            dest: Union[str, ContainerImageReference],
+            auth: Dict[str, Any],
+            src_skip_verify: bool=False,
+            dest_skip_verify: bool=False,
+            src_http: bool=False,
+            dest_http: bool=False
+        ):
+        """
+        Copies the image to a new registry
+
+        Args:
+            dest (Union[str, ContainerImageReference]): The destination location to copy the image
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            src_skip_verify (bool): Insecure, skip TLS cert verification for the source reference
+            dest_skip_verify (bool): Insecure, skip TLS cert verification for the destination reference
+            src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
+            dest_http (bool): Insecure, whether to use HTTP (not HTTPs) for the destination reference
+        """
+        # Get the source manifest or manifests
+        manifest = self.get_manifest(
+            auth=auth,
+            skip_verify=src_skip_verify,
+            http=src_http
+        )
+        if ContainerImage.is_manifest_list_static(manifest):
+            for entry in manifest.get_entries():
+                # Create a new ContainerImage for each manifest
+                manifest_img = ContainerImage(
+                    f"{self.get_name()}@{entry.get_digest()}"
+                )
+
+                # Download each manifest
+                arch_manifest = manifest_img.get_manifest(
+                    auth,
+                    skip_verify=src_skip_verify,
+                    http=src_http
+                )
+
+                # Download each layer
+                arch_layer_desc = arch_manifest.get_layer_descriptors()
+                for desc in arch_layer_desc:
+                    layer = ContainerImageRegistryClient.get_blob(
+                        self,
+                        desc,
+                        auth,
+                        skip_verify=src_skip_verify,
+                        http=src_http
+                    )
+
+                    # Initialize a blob upload for the layer
+                    layer_upload_url = ContainerImageRegistryClient.initialize_upload(
+                        dest,
+                        auth,
+                        skip_verify=dest_skip_verify,
+                        http=dest_http
+                    )
+
+                    # Upload each layer
+                    ContainerImageRegistryClient.upload_blob(
+                        dest,
+                        layer_upload_url,
+                        desc,
+                        layer,
+                        auth=auth,
+                        skip_verify=dest_skip_verify,
+                        http=dest_http
+                    )
+                
+                # Download and upload each config
+                arch_config_desc = arch_manifest.get_config_descriptor()
+                arch_config = ContainerImageRegistryClient.get_blob(
+                    self,
+                    arch_config_desc,
+                    auth,
+                    skip_verify=src_skip_verify,
+                    http=src_http
+                )
+                config_upload_url = ContainerImageRegistryClient.initialize_upload(
+                    dest,
+                    auth,
+                    skip_verify=dest_skip_verify,
+                    http=dest_http
+                )
+                ContainerImageRegistryClient.upload_blob(
+                    dest,
+                    config_upload_url,
+                    arch_config_desc,
+                    arch_config,
+                    auth=auth,
+                    skip_verify=dest_skip_verify,
+                    http=dest_http
+                )
+
+                # Upload each manifest
+                ContainerImageRegistryClient.upload_manifest(
+                    dest,
+                    arch_manifest.__json__(),
+                    arch_manifest.get_media_type(),
+                    auth,
+                    skip_verify=dest_skip_verify,
+                    http=dest_http
+                )
+        else:
+            # Download each layer and save as <digest>
+            layer_desc = manifest.get_layer_descriptors()
+            for desc in layer_desc:
+                layer = ContainerImageRegistryClient.get_blob(
+                    self, desc, auth, skip_verify=src_skip_verify, http=src_http
+                )
+
+                # Initialize a blob upload for the layer
+                layer_upload_url = ContainerImageRegistryClient.initialize_upload(
+                    dest,
+                    auth,
+                    skip_verify=dest_skip_verify,
+                    http=dest_http
+                )
+
+                # Upload each layer
+                ContainerImageRegistryClient.upload_blob(
+                    dest,
+                    layer_upload_url,
+                    desc,
+                    layer,
+                    auth=auth,
+                    skip_verify=dest_skip_verify,
+                    http=dest_http
+                )
+        
+        # Upload the top-level manifest as manifest.json
+        ContainerImageRegistryClient.upload_manifest(
+            dest,
+            manifest.__json__(),
+            manifest.get_media_type(),
+            auth,
+            skip_verify=dest_skip_verify,
+            http=dest_http
+        )
+
+    def delete(
+            self,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ):
         """
         Deletes the image from the registry.
 
         Args:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
         """
         # Ensure the ref is valid, if not raise an exception
         valid, err = self.validate()
         if not valid:
             raise ContainerImageError(err)
-        ContainerImageRegistryClient.delete(self, auth)
+        ContainerImageRegistryClient.delete(
+            self, auth, skip_verify=skip_verify, http=http
+        )
 
 class ContainerImageList:
     """
@@ -543,12 +912,19 @@ class ContainerImageList:
         """
         self.images.append(image)
 
-    def get_size(self, auth: Dict[str, Any]) -> int:
+    def get_size(
+            self,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> int:
         """
         Get the deduplicated size of all container images in the list
 
         Args:
             auth (Dict[str, Any]): A valid docker config JSON dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             int: The deduplicated size of all container images in the list
@@ -561,15 +937,21 @@ class ContainerImageList:
         # Loop through each image in the list
         for image in self.images:
             # Get the image's manifest
-            manifest = image.get_manifest(auth)
+            manifest = image.get_manifest(
+                auth, skip_verify=skip_verify, http=http
+            )
 
             # If a manifest list, get its configs, entry sizes, layers
             image_layers = []
             image_configs = []
             if ContainerImage.is_manifest_list_static(manifest):
                 entry_sizes += manifest.get_entry_sizes()
-                image_layers = manifest.get_layer_descriptors(image.get_name(), auth)
-                image_configs = manifest.get_config_descriptors(image.get_name(), auth)
+                image_layers = manifest.get_layer_descriptors(
+                    image.get_name(), auth, skip_verify=skip_verify, http=http
+                )
+                image_configs = manifest.get_config_descriptors(
+                    image.get_name(), auth, skip_verify=skip_verify, http=http
+                )
             # If an arch manifest, get its config, layers
             else:
                 image_configs = [manifest.get_config_descriptor()]
@@ -596,28 +978,44 @@ class ContainerImageList:
         # Return the summed size
         return layer_sizes + config_sizes + entry_sizes
     
-    def get_size_formatted(self, auth: Dict[str, Any]) -> str:
+    def get_size_formatted(
+            self,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ) -> str:
         """
         Get the deduplicated size of all container images in the list,
         formatted as a human readable string (e.g. 3.14 MB)
 
         Args:
             auth (Dict[str, Any]): A valid docker config JSON dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
             str: List size in bytes formatted to nearest unit (ex. "1.23 MB")
         """
-        return ByteUnit.format_size_bytes(self.get_size(auth))
+        return ByteUnit.format_size_bytes(
+            self.get_size(auth, skip_verify=skip_verify, http=http)
+        )
     
-    def delete(self, auth: Dict[str, Any]):
+    def delete(
+            self,
+            auth: Dict[str, Any],
+            skip_verify: bool=False,
+            http: bool=False
+        ):
         """
         Delete all of the container images in the list from the registry
 
         Args:
             auth (Dict[str, Any]): A valid docker config JSON dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+            http (bool): Insecure, whether to use HTTP (not HTTPs)
         """
         for image in self.images:
-            image.delete(auth)
+            image.delete(auth, skip_verify=skip_verify, http=http)
 
     def diff(self, previous: Type[ContainerImageList]) -> Type[ContainerImageListDiff]:
         """
