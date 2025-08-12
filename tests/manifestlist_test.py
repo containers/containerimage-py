@@ -110,7 +110,7 @@ def test_container_image_manifest_list_get_size(mocker):
 def test_container_image_manifest_list_to_string():
     # Ensure stringified manifest list matches expected string
     manifest_list_str = json.dumps(
-        CNCF_MANIFEST_LIST_EXAMPLE, indent=2, sort_keys=False
+        CNCF_MANIFEST_LIST_EXAMPLE, indent=3, sort_keys=False
     )
     manifest_list = ContainerImageManifestList(CNCF_MANIFEST_LIST_EXAMPLE)
     assert str(manifest_list) == manifest_list_str
