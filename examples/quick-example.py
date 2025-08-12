@@ -17,7 +17,7 @@ sys.path.insert(
 from image.containerimage import ContainerImage
 
 # Initialize a ContainerImage given a tag reference
-my_image = ContainerImage("ghcr.io/matejvasek/builder-ubi8-base:latest")
+my_image = ContainerImage("registry.k8s.io/pause:3.5")
 
 # Display some basic information about the container image
 print(
