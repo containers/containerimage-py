@@ -33,9 +33,9 @@ DEFAULT_REQUEST_MANIFEST_MEDIA_TYPES = [
 The default accepted mediaTypes for querying manifests
 """
 
-DEFAULT_CHUNK_SIZE = 16777216
+DEFAULT_CHUNK_SIZE = 1024 * 255
 """
-The default chunk size for chunked blob uploads, 16MB
+The default chunk size for chunked blob uploads, 255 KB
 """
 
 class ContainerImageRegistryClient:
@@ -991,7 +991,7 @@ class ContainerImageRegistryClient:
                 res, reg_auth, skip_verify=skip_verify
             )
             headers['Authorization'] = f'{scheme} {token}'
-            res = requests.post(
+            res = requests.put(
                 api_url,
                 headers=headers,
                 data=json.dumps(
