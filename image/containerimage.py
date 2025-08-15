@@ -729,6 +729,8 @@ class ContainerImage(ContainerImageReference):
         Args:
             dest (Union[str, ContainerImageReference]): The destination location to copy the image
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            chunked (bool): Whether to upload blobs in chunks or monolithically
+            chunk_size (int): The chunk size to use for chunked blob uploads, measured in bytes
             src_skip_verify (bool): Insecure, skip TLS cert verification for the source reference
             dest_skip_verify (bool): Insecure, skip TLS cert verification for the destination reference
             src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
