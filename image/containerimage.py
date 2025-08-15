@@ -12,7 +12,8 @@ import requests
 from typing                         import  List, Dict, Any, \
                                             Union, Type, Iterator
 from image.byteunit                 import  ByteUnit
-from image.client                   import  ContainerImageRegistryClient
+from image.client                   import  ContainerImageRegistryClient, \
+                                            DEFAULT_CHUNK_SIZE
 from image.config                   import  ContainerImageConfig
 from image.containerimageinspect    import  ContainerImageInspect
 from image.errors                   import  ContainerImageError
@@ -716,6 +717,7 @@ class ContainerImage(ContainerImageReference):
             dest: Union[str, ContainerImageReference],
             auth: Dict[str, Any],
             chunked: bool=True,
+            chunk_size: int=DEFAULT_CHUNK_SIZE,
             src_skip_verify: bool=False,
             dest_skip_verify: bool=False,
             src_http: bool=False,
@@ -727,11 +729,21 @@ class ContainerImage(ContainerImageReference):
         Args:
             dest (Union[str, ContainerImageReference]): The destination location to copy the image
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            chunked (bool): Whether to upload blobs in chunks or monolithically
+            chunk_size (int): The chunk size to use for chunked blob uploads, measured in bytes
             src_skip_verify (bool): Insecure, skip TLS cert verification for the source reference
             dest_skip_verify (bool): Insecure, skip TLS cert verification for the destination reference
             src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
             dest_http (bool): Insecure, whether to use HTTP (not HTTPs) for the destination reference
         """
+        # Ensure the destination image is a tag reference
+        if isinstance(dest, str):
+            dest = ContainerImage(dest)
+        if not dest.is_tag_ref():
+            raise ContainerImageError(
+                f"Destination must be a tag reference, got: {str(dest)}"
+            )
+        
         # Get the source manifest or manifests
         manifest = self.get_manifest(
             auth=auth,
@@ -778,6 +790,7 @@ class ContainerImage(ContainerImageReference):
                         desc,
                         layer,
                         chunked=chunked,
+                        chunk_size=chunk_size,
                         auth=auth,
                         skip_verify=dest_skip_verify,
                         http=dest_http
@@ -804,6 +817,7 @@ class ContainerImage(ContainerImageReference):
                     arch_config_desc,
                     arch_config,
                     chunked=chunked,
+                    chunk_size=chunk_size,
                     auth=auth,
                     skip_verify=dest_skip_verify,
                     http=dest_http
@@ -841,6 +855,7 @@ class ContainerImage(ContainerImageReference):
                     desc,
                     layer,
                     chunked=chunked,
+                    chunk_size=chunk_size,
                     auth=auth,
                     skip_verify=dest_skip_verify,
                     http=dest_http
