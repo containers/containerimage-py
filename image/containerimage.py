@@ -715,6 +715,7 @@ class ContainerImage(ContainerImageReference):
             self,
             dest: Union[str, ContainerImageReference],
             auth: Dict[str, Any],
+            chunked: bool=True,
             src_skip_verify: bool=False,
             dest_skip_verify: bool=False,
             src_http: bool=False,
@@ -776,6 +777,7 @@ class ContainerImage(ContainerImageReference):
                         layer_upload_url,
                         desc,
                         layer,
+                        chunked=chunked,
                         auth=auth,
                         skip_verify=dest_skip_verify,
                         http=dest_http
@@ -801,6 +803,7 @@ class ContainerImage(ContainerImageReference):
                     config_upload_url,
                     arch_config_desc,
                     arch_config,
+                    chunked=chunked,
                     auth=auth,
                     skip_verify=dest_skip_verify,
                     http=dest_http
@@ -837,6 +840,7 @@ class ContainerImage(ContainerImageReference):
                     layer_upload_url,
                     desc,
                     layer,
+                    chunked=chunked,
                     auth=auth,
                     skip_verify=dest_skip_verify,
                     http=dest_http
