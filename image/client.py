@@ -8,7 +8,6 @@ import hashlib
 import json
 import re
 import requests
-import urllib
 from image.descriptor   import  ContainerImageDescriptor
 from image.errors       import  ContainerImageError
 from image.mediatypes   import  DOCKER_V2S2_MEDIA_TYPE, \
@@ -20,6 +19,7 @@ from image.mediatypes   import  DOCKER_V2S2_MEDIA_TYPE, \
 from image.reference    import  ContainerImageReference
 from image.regex        import  ANCHORED_DIGEST
 from typing             import  Dict, Tuple, Any, Union
+from urllib.parse       import  urlparse, urlencode, parse_qs, urlunparse
 
 DEFAULT_REQUEST_MANIFEST_MEDIA_TYPES = [
     DOCKER_V2S2_LIST_MEDIA_TYPE,
@@ -81,6 +81,26 @@ class ContainerImageRegistryClient:
         transport = "https" if not http else "http"
         return f"{transport}://{domain}/v2/{path}"
     
+    @staticmethod
+    def append_query_params(url: str, params: dict[str, Any]) -> str:
+        """
+        Helper method which appends query parameters to a URL in a safe manner
+
+        Args:
+            url (str): The URL to append to
+            params (dict): The params to append
+
+        Returns:
+            str: The updated URL
+        """
+        parsed = urlparse(url)
+        query_params = parse_qs(parsed.query)
+        for key, val in params.items():
+            query_params[key] = query_params.get(key, []) + [val]
+        new_query = urlencode(query_params, doseq=True)
+        new_url = urlunparse(parsed._replace(query=new_query))
+        return new_url
+
     @staticmethod
     def get_registry_auth(
             str_or_ref: Union[str, ContainerImageReference],
@@ -158,7 +178,13 @@ class ContainerImageRegistryClient:
 
         # Parse each key-value pair into a dict
         query_params = {}
-        query_param_components = auth_components[1].split(",")
+        # Splits on all commas not separated by double-quotes
+        # Ex, we may get a token with scope pull,push
+        # Naively splitting on the comma character will break us
+        query_param_components = re.split(
+            r',(?=(?:[^"]*"[^"]*")*[^"]*$)',
+            auth_components[1]
+        )
         for param in query_param_components:
             param_components = param.split("=")
             query_params[param_components[0]] = param_components[1].replace("\"", "")
@@ -166,8 +192,10 @@ class ContainerImageRegistryClient:
         # Pop the realm value out of the dict and encode as a query string
         # Format into the auth service URL to request
         realm = query_params.pop("realm")
-        query_string = urllib.parse.urlencode(query_params)
-        auth_url = f"{realm}?{query_string}"
+        auth_url = ContainerImageRegistryClient.append_query_params(
+            realm,
+            query_params
+        )
 
         # Send the request to the auth service, parse the token from the
         # response
@@ -456,7 +484,12 @@ class ContainerImageRegistryClient:
             ref = ContainerImageReference(str_or_ref)
         
         # Construct the API URL for uploading the blob
-        api_url = f'{upload_url}&digest={desc.get_digest()}'
+        api_url = ContainerImageRegistryClient.append_query_params(
+            url=upload_url,
+            params={
+                "digest": desc.get_digest()
+            }
+        )
 
         # Construct the headers for uploading the blob
         headers = {
@@ -548,7 +581,12 @@ class ContainerImageRegistryClient:
             headers["Content-Length"] = str(len(chunk))
             headers["Content-Range"] = f"{i}-{upper - 1}"
             if upper == len(content):
-                fin_api_url = f'{chunk_upload_url}&digest={desc.get_digest()}'
+                fin_api_url = ContainerImageRegistryClient.append_query_params(
+                    url=chunk_upload_url,
+                    params={
+                        "digest": desc.get_digest()
+                    }
+                )
                 res = requests.put(
                     fin_api_url,
                     headers=headers,
