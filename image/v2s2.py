@@ -3,6 +3,7 @@ Contains docker v2s2-specific implementations of the container image manifest,
 manifest list entry, and manifest list classes
 """
 
+import json
 import re
 from typing import Dict, Any, Tuple, List
 from jsonschema import validate, ValidationError
@@ -92,17 +93,20 @@ class ContainerImageManifestV2S2(ContainerImageManifest):
         Returns:
             ContainerImageManifestV2S2: The v2s2 manifest instance
         """
-        return ContainerImageManifestV2S2(manifest.manifest)
+        return ContainerImageManifestV2S2(manifest.raw())
 
-    def __init__(self, manifest: Dict[str, Any]):
+    def __init__(self, manifest: bytes):
         """
         Constructor for the ContainerImageManifestV2S2 class
 
         Args:
-            manifest (Dict[str, Any]): The manifest loaded into a dict
+            manifest (bytes): The raw manifest bytes
         """
+        # Load the manifest as a dict
+        loaded = json.loads(manifest)
+
         # Validate the image manifest
-        valid, err = ContainerImageManifestV2S2.validate_static(manifest)
+        valid, err = ContainerImageManifestV2S2.validate_static(loaded)
         if not valid:
             raise ValidationError(err)
 
@@ -255,17 +259,20 @@ class ContainerImageManifestListV2S2(ContainerImageManifestList):
         Returns:
             ContainerImageManifestListV2S2: The v2s2 manifest list instance
         """
-        return ContainerImageManifestListV2S2(manifest_list.manifest_list)
+        return ContainerImageManifestListV2S2(manifest_list.raw())
 
-    def __init__(self, manifest_list: Dict[str, Any]):
+    def __init__(self, manifest_list: bytes):
         """
         Constructor for the ContainerImageManifestListV2S2 class
 
         Args:
-            manifest_list (Dict[str, Any]): The manifest list loaded into a dict
+            manifest_list (bytes): The raw manifest list bytes
         """
+        # Load the manifest list as a dict
+        loaded = json.loads(manifest_list)
+
         # Validate the image manifest list
-        valid, err = ContainerImageManifestListV2S2.validate_static(manifest_list)
+        valid, err = ContainerImageManifestListV2S2.validate_static(loaded)
         if not valid:
             raise ValidationError(err)
 

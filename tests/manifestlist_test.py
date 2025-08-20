@@ -49,7 +49,9 @@ Unit tests for the ContainerImageManifest class
 def test_container_image_manifest_list_get_entries():
     # Ensure entries match expected typing and length
     manifest_list = ContainerImageManifestList(
-        copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+        ).encode('utf-8')
     )
     entries = manifest_list.get_entries()
     assert isinstance(entries, list)
@@ -65,16 +67,26 @@ def test_container_image_manifest_list_get_manifests(mocker):
         mock_get_manifest
     )
     manifest_list = ContainerImageManifestList(
-        copy.deepcopy(REDHAT_MANIFEST_LIST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(REDHAT_MANIFEST_LIST_EXAMPLE)
+        ).encode('utf-8')
     )
     manifests = manifest_list.get_manifests(
         MOCK_IMAGE_NAME, MOCK_REGISTRY_CREDS
     )
     expected_manifests = [
-        ContainerImageManifest(REDHAT_AMD64_MANIFEST),
-        ContainerImageManifest(REDHAT_ARM64_MANIFEST),
-        ContainerImageManifest(REDHAT_PPC64LE_MANIFEST),
-        ContainerImageManifest(REDHAT_S390X_MANIFEST)
+        ContainerImageManifest(
+            json.dumps(REDHAT_AMD64_MANIFEST).encode('utf-8')
+        ),
+        ContainerImageManifest(
+            json.dumps(REDHAT_ARM64_MANIFEST).encode('utf-8')
+        ),
+        ContainerImageManifest(
+            json.dumps(REDHAT_PPC64LE_MANIFEST).encode('utf-8')
+        ),
+        ContainerImageManifest(
+            json.dumps(REDHAT_S390X_MANIFEST).encode('utf-8')
+        )
     ]
     assert json.dumps(manifests) == json.dumps(expected_manifests)
     assert isinstance(manifests[0], ContainerImageManifest)
@@ -90,7 +102,9 @@ def test_container_image_manifest_list_get_size(mocker):
         mock_get_manifest
     )
     manifest_list = ContainerImageManifestList(
-        copy.deepcopy(REDHAT_MANIFEST_LIST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(REDHAT_MANIFEST_LIST_EXAMPLE)
+        ).encode('utf-8')
     )
     size = manifest_list.get_size(MOCK_IMAGE_NAME, MOCK_REGISTRY_CREDS)
     expected_size = REDHAT_MANIFEST_LIST_EXAMPLE["manifests"][0]["size"] + \
@@ -112,10 +126,14 @@ def test_container_image_manifest_list_to_string():
     manifest_list_str = json.dumps(
         CNCF_MANIFEST_LIST_EXAMPLE, indent=3, sort_keys=False
     )
-    manifest_list = ContainerImageManifestList(CNCF_MANIFEST_LIST_EXAMPLE)
+    manifest_list = ContainerImageManifestList(
+        json.dumps(CNCF_MANIFEST_LIST_EXAMPLE).encode('utf-8')
+    )
     assert str(manifest_list) == manifest_list_str
 
 def test_container_image_manifest_to_json():
     # Ensure JSONified manifest list matches expected JSON conversion
-    manifest_list = ContainerImageManifestList(CNCF_MANIFEST_LIST_EXAMPLE)
+    manifest_list = ContainerImageManifestList(
+        json.dumps(CNCF_MANIFEST_LIST_EXAMPLE).encode('utf-8')
+    )
     assert json.dumps(manifest_list) == json.dumps(CNCF_MANIFEST_LIST_EXAMPLE)

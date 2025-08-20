@@ -5,7 +5,6 @@ distribution registry API.
 """
 
 import hashlib
-import json
 import re
 import requests
 from image.descriptor   import  ContainerImageDescriptor
@@ -901,9 +900,9 @@ class ContainerImageRegistryClient:
             auth: Dict[str, Any],
             skip_verify: bool=False,
             http: bool=False
-        ) -> Dict[str, Any]:
+        ) -> bytes:
         """
-        Fetches the manifest from the registry API and returns as a dict
+        Fetches the manifest from the registry API and returns as raw bytes
 
         Args:
             str_or_ref (Union[str, ContainerImageReference]): An image reference
@@ -912,26 +911,23 @@ class ContainerImageRegistryClient:
             http (bool): Insecure, whether to use HTTP (not HTTPs)
 
         Returns:
-            Dict[str, Any]: The manifest loaded into a dict
+            bytes: The raw manifest bytes
         """
         # If given a str, then load as a ref
         ref = str_or_ref
         if isinstance(str_or_ref, str):
             ref = ContainerImageReference(str_or_ref)
         
-        # Query the manifest, get the manifest response
+        # Query the manifest, get the manifest response, return raw response
         res = ContainerImageRegistryClient.query_manifest(
             ref, auth, skip_verify=skip_verify, http=http
         )
-
-        # Load the manifest into a dict and return
-        manifest = res.json()
-        return manifest
+        return res.content
     
     @staticmethod
     def upload_manifest(
             str_or_ref: Union[str, ContainerImageReference],
-            manifest: Dict[str, Any],
+            manifest: bytes,
             media_type: str,
             auth: Dict[str, Any],
             skip_verify: bool=False,
@@ -942,7 +938,7 @@ class ContainerImageRegistryClient:
 
         Args:
             str_or_ref (Union[str, ContainerImageReference]): The image reference under which to push the manifest
-            manifest (Dict[str, Any]): The manifest to upload loaded into a dict
+            manifest (bytes): The raw manifest bytes to upload
             media_type (str): The manifest media type as a string
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
@@ -978,9 +974,7 @@ class ContainerImageRegistryClient:
         res = requests.put(
             api_url,
             headers=headers,
-            data=json.dumps(
-                manifest, indent=3, sort_keys=False
-            ).encode('utf-8'),
+            data=manifest,
             verify=not skip_verify
         )
         if res.status_code == 401 and \
@@ -994,9 +988,7 @@ class ContainerImageRegistryClient:
             res = requests.put(
                 api_url,
                 headers=headers,
-                data=json.dumps(
-                    manifest, indent=3, sort_keys=False
-                ).encode('utf-8'),
+                data=manifest,
                 verify=not skip_verify
             )
         
@@ -1038,11 +1030,7 @@ class ContainerImageRegistryClient:
         if digest_header in res.headers.keys():
             digest = str(res.headers['Docker-Content-Digest'])
         else:
-            manifest = res.json()
-            # Indent 3 is required to compute the correct digest
-            # Important that this is not changed as the digest would change
-            encoded_manifest = json.dumps(manifest, indent=3).encode('utf-8')
-            digest = hashlib.sha256(encoded_manifest).hexdigest()
+            digest = hashlib.sha256(res.content).hexdigest()
 
         # Validate the digest, return if valid
         if not bool(re.match(ANCHORED_DIGEST, digest)):
