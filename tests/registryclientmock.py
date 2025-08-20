@@ -123,37 +123,37 @@ def mock_get_manifest(
     """
     if str(ref_or_img) == f"{MOCK_IMAGE_NAME}@" + \
         "sha256:f5d2c6a1e0c86e4234ea601552dbabb4ced0e013a1efcbfb439f1f6a7a9275b0":
-        return REDHAT_AMD64_MANIFEST
+        return json.dumps(REDHAT_AMD64_MANIFEST).encode('utf-8')
     elif str(ref_or_img) == f"{MOCK_IMAGE_NAME}@" + \
         "sha256:96f4394d39e6edb69ca51f000f3e7dfb62990f55868134cfd83c82177651e848":
-        return REDHAT_ARM64_MANIFEST
+        return json.dumps(REDHAT_ARM64_MANIFEST).encode('utf-8')
     elif str(ref_or_img) == f"{MOCK_IMAGE_NAME}@" + \
         "sha256:39c59a30e3ecae689c23b27e54a81e03d9a5db22d11890edaf6bb16bac783e8b":
-        return REDHAT_PPC64LE_MANIFEST
+        return json.dumps(REDHAT_PPC64LE_MANIFEST).encode('utf-8')
     elif str(ref_or_img) == f"{MOCK_IMAGE_NAME}@" + \
         "sha256:d187f310724694b1daae2f99f6f86ae05b573eed6826fa40d4233e76bd07312e":
-        return REDHAT_S390X_MANIFEST
+        return json.dumps(REDHAT_S390X_MANIFEST).encode('utf-8')
     elif str(ref_or_img) == f"{MOCK_IMAGE_NAME}@" + \
         "sha256:058913b247adb61e488c14ee8ab0f5c8022fd08dc945a9d900a02f32effde5c2":
-        return REDHAT_AMD64_MANIFEST_DUP
+        return json.dumps(REDHAT_AMD64_MANIFEST_DUP).encode('utf-8')
     elif str(ref_or_img) == f"{MOCK_IMAGE_NAME}:latest":
-        return REDHAT_MANIFEST_LIST_EXAMPLE
+        return json.dumps(REDHAT_MANIFEST_LIST_EXAMPLE).encode('utf-8')
     elif str(ref_or_img) == f"{MOCK_IMAGE_NAME}:latest-dup":
-        return REDHAT_MANIFEST_LIST_EXAMPLE_DUP
+        return json.dumps(REDHAT_MANIFEST_LIST_EXAMPLE_DUP).encode('utf-8')
     elif str(ref_or_img) == f"{MOCK_IMAGE_NAME}:latest-attestation":
-        return ATTESTATION_MANIFEST_LIST_EXAMPLE
+        return json.dumps(ATTESTATION_MANIFEST_LIST_EXAMPLE).encode('utf-8')
     elif str(ref_or_img) == f"{MOCK_IMAGE_NAME}@" + \
         "sha256:aa0304d8024783de8537f7e776f33deb57820b853849355b9cbc2a618511521d":
-        return ATTESTATION_AMD64_MANIFEST
+        return json.dumps(ATTESTATION_AMD64_MANIFEST).encode('utf-8')
     elif str(ref_or_img) == f"{MOCK_IMAGE_NAME}@" + \
         "sha256:d06586cc1e3a1f21052c2747237c2394917c8ab7d2e10c284ab975196eff0084":
-        return ATTESTATION_S390X_MANIFEST
+        return json.dumps(ATTESTATION_S390X_MANIFEST).encode('utf-8')
     elif str(ref_or_img) == f"{MOCK_IMAGE_NAME}@" + \
         "sha256:171dcd736979ede2a044022fab58b6fa558e5ea9b1486d655d213c688af2c592":
-        return ATTESTATION_AMD64_ATTESTATION_MANIFEST
+        return json.dumps(ATTESTATION_AMD64_ATTESTATION_MANIFEST).encode('utf-8')
     elif str(ref_or_img) == f"{MOCK_IMAGE_NAME}@" + \
         "sha256:61d78e5bc2772b75b97fc80f1e796594da4c5421957872be9302b39b1cf155b8":
-        return ATTESTATION_S390X_ATTESTATION_MANIFEST
+        return json.dumps(ATTESTATION_S390X_ATTESTATION_MANIFEST).encode('utf-8')
     else:
         raise Exception(f"Unmocked reference: {ref_or_img}")
 

@@ -1,4 +1,5 @@
 import copy
+import json
 from image.containerimage       import  ContainerImageRegistryClient
 from tests.registryclientmock   import  REDHAT_AMD64_MANIFEST, \
                                         REDHAT_MANIFEST_LIST_EXAMPLE, \
@@ -100,9 +101,11 @@ def test_container_image_registry_client_get_registry_auth():
     assert auth == expected_auth
 
 def test_container_image_registry_client_get_manifest(mocker):
-    # Ensure a dict is returned when valid manifest is given
+    # Ensure bytes are returned when valid manifest is given
     mock_response = mocker.MagicMock()
-    mock_response.json.return_value = copy.deepcopy(REDHAT_AMD64_MANIFEST)
+    mock_response.content = json.dumps(
+        copy.deepcopy(REDHAT_AMD64_MANIFEST)
+    ).encode('utf-8')
     mock_response.raise_for_status.return_value = None
     mocker.patch("requests.get", return_value=mock_response)
     manifest = ContainerImageRegistryClient.get_manifest(
@@ -110,7 +113,7 @@ def test_container_image_registry_client_get_manifest(mocker):
             REDHAT_MANIFEST_LIST_EXAMPLE["manifests"][0]["digest"],
         MOCK_REGISTRY_CREDS
     )
-    assert isinstance(manifest, dict)
+    assert isinstance(manifest, bytes)
 
 def test_container_image_registry_client_delete(mocker):
     # Ensure no exceptions are raised when image is successfully deleted

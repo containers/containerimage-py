@@ -14,13 +14,14 @@ sys.path.insert(
 # End Hack
 ######
 
+from image.auth import AUTH
 from image.containerimage import ContainerImage
 
 # Initialize a ContainerImage given a tag reference
 my_image = ContainerImage("registry.k8s.io/pause:3.5")
 
 # Display the inspect information for the container image
-my_image_inspect = my_image.inspect(auth={})
+my_image_inspect = my_image.inspect(auth=AUTH)
 print(
     f"Inspect of {str(my_image)}: \n" + \
     str(my_image_inspect)

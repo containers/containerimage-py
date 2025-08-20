@@ -3,6 +3,7 @@ Contains OCI-specific implementations of the container image manifest,
 manifest list entry, and manifest list classes
 """
 
+import json
 import re
 from typing                     import  Dict, Any, Tuple, List
 from jsonschema                 import  validate, ValidationError
@@ -91,17 +92,20 @@ class ContainerImageManifestOCI(ContainerImageManifest):
         Returns:
             ContainerImageManifestOCI: The OCI manifest instance
         """
-        return ContainerImageManifestOCI(manifest.manifest)
+        return ContainerImageManifestOCI(manifest.raw())
 
-    def __init__(self, manifest: Dict[str, Any]):
+    def __init__(self, manifest: bytes):
         """
         Constructor for the ContainerImageManifestOCI class
 
         Args:
-            manifest (Dict[str, Any]): The manifest loaded into a dict
+            manifest (bytes): The raw manifest bytes
         """
+        # Load the manifest as a dict
+        loaded = json.loads(manifest)
+
         # Validate the image manifest
-        valid, err = ContainerImageManifestOCI.validate_static(manifest)
+        valid, err = ContainerImageManifestOCI.validate_static(loaded)
         if not valid:
             raise ValidationError(err)
 
@@ -256,17 +260,20 @@ class ContainerImageIndexOCI(ContainerImageManifestList):
         Returns:
             ContainerImageIndexOCI: The OCI image index instance
         """
-        return ContainerImageIndexOCI(manifest_list.manifest_list)
+        return ContainerImageIndexOCI(manifest_list.raw())
 
-    def __init__(self, index: Dict[str, Any]):
+    def __init__(self, index: bytes):
         """
         Constructor for the ContainerImageIndexOCI class
 
         Args:
-            manifest_list (Dict[str, Any]): The image index loaded into a dict
+            manifest_list (bytes): The raw image index bytes
         """
+        # Load the image index as a dict
+        loaded = json.loads(index)
+
         # Validate the image index
-        valid, err = ContainerImageIndexOCI.validate_static(index)
+        valid, err = ContainerImageIndexOCI.validate_static(loaded)
         if not valid:
             raise ValidationError(err)
 
