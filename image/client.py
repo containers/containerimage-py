@@ -33,9 +33,9 @@ DEFAULT_REQUEST_MANIFEST_MEDIA_TYPES = [
 The default accepted mediaTypes for querying manifests
 """
 
-DEFAULT_CHUNK_SIZE = 1024 * 255
+DEFAULT_CHUNK_SIZE = 1024 * 1024 * 16
 """
-The default chunk size for chunked blob uploads, 255 KB
+The default chunk size for chunked blob uploads, 16 MB
 """
 
 class ContainerImageRegistryClient:
