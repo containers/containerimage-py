@@ -57,7 +57,7 @@ REDHAT_MANIFEST_EXAMPLE = {
 def test_container_image_manifest_get_config_descriptor():
     # Ensure valid config equals expected config
     manifest = ContainerImageManifest(
-        copy.deepcopy(OCI_MANIFEST_EXAMPLE)
+        json.dumps(copy.deepcopy(OCI_MANIFEST_EXAMPLE)).encode('utf-8')
     )
     config = manifest.get_config_descriptor()
     assert isinstance(config, ContainerImageDescriptor)
@@ -77,7 +77,7 @@ def test_container_image_manifest_get_config_descriptor():
 def test_container_image_manifest_get_layer_descriptors():
     # Ensure valid layers equal expected layers
     manifest = ContainerImageManifest(
-        copy.deepcopy(OCI_MANIFEST_EXAMPLE)
+        json.dumps(copy.deepcopy(OCI_MANIFEST_EXAMPLE)).encode('utf-8')
     )
     layers = manifest.get_layer_descriptors()
     assert isinstance(layers, list)
@@ -106,7 +106,7 @@ def test_container_image_manifest_get_size():
                     OCI_MANIFEST_EXAMPLE["layers"][1]["size"] + \
                     OCI_MANIFEST_EXAMPLE["layers"][2]["size"]
     manifest = ContainerImageManifest(
-        copy.deepcopy(OCI_MANIFEST_EXAMPLE)
+        json.dumps(copy.deepcopy(OCI_MANIFEST_EXAMPLE)).encode('utf-8')
     )
     size = manifest.get_size()
     assert size == expected_size
@@ -115,16 +115,20 @@ def test_container_image_manifest_get_size():
     expected_size = REDHAT_MANIFEST_EXAMPLE["config"]["size"] + \
                     REDHAT_MANIFEST_EXAMPLE["layers"][0]["size"]
     manifest = ContainerImageManifest(
-        copy.deepcopy(REDHAT_MANIFEST_EXAMPLE)
+        json.dumps(copy.deepcopy(REDHAT_MANIFEST_EXAMPLE)).encode('utf-8')
     )
     size = manifest.get_size()
     assert size == expected_size
 
 def test_container_image_manifest_to_string():
     manifest_str = json.dumps(OCI_MANIFEST_EXAMPLE, indent=3, sort_keys=False)
-    manifest = ContainerImageManifest(OCI_MANIFEST_EXAMPLE)
+    manifest = ContainerImageManifest(
+        json.dumps(OCI_MANIFEST_EXAMPLE).encode('utf-8')
+    )
     assert str(manifest) == manifest_str
 
 def test_container_image_manifest_to_json():
-    manifest = ContainerImageManifest(OCI_MANIFEST_EXAMPLE)
+    manifest = ContainerImageManifest(
+        json.dumps(OCI_MANIFEST_EXAMPLE).encode('utf-8')
+    )
     assert json.dumps(manifest) == json.dumps(OCI_MANIFEST_EXAMPLE)

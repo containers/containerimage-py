@@ -14,14 +14,15 @@ class ContainerImageManifest:
     ContainerImageManifestOCI since the two specs are very similar, with the
     v2s2 spec being more restrictive than the OCI spec.
     """
-    def __init__(self, manifest: Dict[str, Any]):
+    def __init__(self, manifest: bytes):
         """
         Constructor for the ContainerImageManifest class
 
         Args:
-            manifest (Dict[str, Any]): The manifest loaded into a dict
+            manifest (bytes): The raw manifest bytes
         """
-        self.manifest = manifest
+        self.raw_manifest = manifest
+        self.manifest = json.loads(manifest)
 
     def get_layer_descriptors(self) -> List[ContainerImageDescriptor]:
         """
@@ -89,6 +90,15 @@ class ContainerImageManifest:
 
         # Add and return the size of the manifest
         return config_size + layer_size
+
+    def raw(self) -> bytes:
+        """
+        Returns the raw, unmodified manifest bytes
+
+        Returns:
+            bytes: The raw, unmodified manifest bytes
+        """
+        return self.raw_manifest
 
     def __str__(self) -> str:
         """

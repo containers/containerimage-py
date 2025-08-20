@@ -341,7 +341,9 @@ def test_container_image_oci_manifest_list_instantiation():
     # Ensure exception is thrown on instantiation using invalid schema
     exc = None
     try:
-        manifest_list = ContainerImageIndexOCI({})
+        manifest_list = ContainerImageIndexOCI(
+            json.dumps({}).encode('utf-8')
+        )
     except Exception as e:
         exc = e
     assert exc != None
@@ -349,14 +351,18 @@ def test_container_image_oci_manifest_list_instantiation():
 
     # Ensure ContainerImageIndexOCI is returned when using valid schema
     manifest_list = ContainerImageIndexOCI(
-        copy.deepcopy(OCI_IMAGE_INDEX_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(OCI_IMAGE_INDEX_EXAMPLE)
+        ).encode('utf-8')
     )
     assert isinstance(manifest_list, ContainerImageIndexOCI)
 
 def test_container_image_oci_manifest_list_instance_validation():
     # Ensure ContainerImageIndexOCI instantiates and is valid post-instantiation
     manifest_list = ContainerImageIndexOCI(
-        copy.deepcopy(OCI_IMAGE_INDEX_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(OCI_IMAGE_INDEX_EXAMPLE)
+        ).encode('utf-8')
     )
     valid, err = manifest_list.validate()
     assert valid == True
@@ -394,7 +400,9 @@ def test_container_image_oci_manifest_list_instance_validation():
 def test_container_image_oci_manifest_list_get_entries():
     # Ensure entries match expected typing and length
     manifest_list = ContainerImageIndexOCI(
-        copy.deepcopy(OCI_IMAGE_INDEX_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(OCI_IMAGE_INDEX_EXAMPLE)
+        ).encode('utf-8')
     )
     entries = manifest_list.get_oci_entries()
     assert isinstance(entries, list)
@@ -422,16 +430,26 @@ def test_container_image_oci_manifest_list_get_manifests(mocker):
 
     # Ensure the OCI index manifests can be retrieved
     manifest_list = ContainerImageIndexOCI(
-        copy.deepcopy(ATTESTATION_MANIFEST_LIST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(ATTESTATION_MANIFEST_LIST_EXAMPLE)
+        ).encode('utf-8')
     )
     manifests = manifest_list.get_oci_manifests(
         MOCK_IMAGE_NAME, MOCK_REGISTRY_CREDS
     )
     expected_manifests = [
-        ContainerImageManifestOCI(ATTESTATION_AMD64_MANIFEST),
-        ContainerImageManifestOCI(ATTESTATION_S390X_MANIFEST),
-        ContainerImageManifestOCI(ATTESTATION_AMD64_ATTESTATION_MANIFEST),
-        ContainerImageManifestOCI(ATTESTATION_S390X_ATTESTATION_MANIFEST)
+        ContainerImageManifestOCI(
+            json.dumps(ATTESTATION_AMD64_MANIFEST).encode('utf-8')
+        ),
+        ContainerImageManifestOCI(
+            json.dumps(ATTESTATION_S390X_MANIFEST).encode('utf-8')
+        ),
+        ContainerImageManifestOCI(
+            json.dumps(ATTESTATION_AMD64_ATTESTATION_MANIFEST).encode('utf-8')
+        ),
+        ContainerImageManifestOCI(
+            json.dumps(ATTESTATION_S390X_ATTESTATION_MANIFEST).encode('utf-8')
+        )
     ]
     assert json.dumps(manifests) == json.dumps(expected_manifests)
 
@@ -504,7 +522,9 @@ def test_container_image_oci_manifest_instantiation():
     # Ensure exception is thrown on instantiation using invalid schema
     exc = None
     try:
-        manifest = ContainerImageManifestOCI({})
+        manifest = ContainerImageManifestOCI(
+            json.dumps({}).encode('utf-8')
+        )
     except Exception as e:
         exc = e
     assert exc != None
@@ -512,13 +532,17 @@ def test_container_image_oci_manifest_instantiation():
 
     # Ensure ContainerImageManifestOCI is returned when using valid schema
     manifest = ContainerImageManifestOCI(
-        copy.deepcopy(OCI_MANIFEST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(OCI_MANIFEST_EXAMPLE)
+        ).encode('utf-8')
     )
     assert isinstance(manifest, ContainerImageManifestOCI)
 
     # Ensure a generic manifest can be converted into an OCI manifest
     generic_manifest = ContainerImageManifest(
-        copy.deepcopy(OCI_MANIFEST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(OCI_MANIFEST_EXAMPLE)
+        ).encode('utf-8')
     )
     manifest = ContainerImageManifestOCI.from_manifest(
         generic_manifest
@@ -528,7 +552,9 @@ def test_container_image_oci_manifest_instantiation():
 def test_container_image_oci_manifest_instance_validation():
     # Ensure ContainerImageManifestOCI instantiates and is valid post-instantiation
     manifest = ContainerImageManifestOCI(
-        copy.deepcopy(OCI_MANIFEST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(OCI_MANIFEST_EXAMPLE)
+        ).encode('utf-8')
     )
     valid, err = manifest.validate()
     assert valid == True

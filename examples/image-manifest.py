@@ -14,19 +14,15 @@ sys.path.insert(
 # End Hack
 ######
 
-DEST_PATH = os.environ.get(
-    "DEST_PATH",
-    os.getcwd()
-)
-
+import hashlib
 from image.auth import AUTH
 from image.containerimage import ContainerImage
 
 # Initialize a ContainerImage given a tag reference
 my_image = ContainerImage("registry.k8s.io/pause:3.5")
 
-# Download the image onto your filesystem
-my_image.download(
-    DEST_PATH,
-    auth=AUTH
-)
+# Display the inspect information for the container image
+manifest = my_image.get_manifest(auth=AUTH)
+digest = hashlib.sha256(manifest.raw()).hexdigest()
+print(f"Digest: {digest}")
+print(manifest)

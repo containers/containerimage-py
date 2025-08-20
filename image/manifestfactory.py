@@ -9,7 +9,7 @@ from image.oci      import  ContainerImageManifestOCI, \
                             ContainerImageIndexOCI
 from image.v2s2     import  ContainerImageManifestV2S2, \
                             ContainerImageManifestListV2S2
-from typing         import  Dict, Any, Union
+from typing         import  Union
 
 class ContainerImageManifestFactory:
     """
@@ -21,61 +21,61 @@ class ContainerImageManifestFactory:
     - ContainerImageIndexOCI
     - ContainerImageManifestOCI
     """
-    def create_v2s2_manifest(manifest: Dict[str, Any]) -> ContainerImageManifestV2S2:
+    def create_v2s2_manifest(manifest: bytes) -> ContainerImageManifestV2S2:
         """
         Given a manifest response from the distribution registry API, create
         a ContainerImageManifestV2S2, or raise an exception if it's invalid
 
         Args:
-            manifest (Dict[str, Any]): A v2s2 manifest dict
+            manifest (bytes): Raw v2s2 manifest bytes
 
         Returns:
             ContainerImageManifestV2S2: A v2s2 manifest object
         """
         return ContainerImageManifestV2S2(manifest)
 
-    def create_v2s2_manifest_list(manifest_list: Dict[str, Any]) -> ContainerImageManifestListV2S2:
+    def create_v2s2_manifest_list(manifest_list: bytes) -> ContainerImageManifestListV2S2:
         """
         Given a manifest list response from the distribution registry API,
         create a ContainerImageManifestListV2S2, or raise an exception if it's
         invalid
 
         Args:
-            manifest_list (Dict[str, Any]): A v2s2 manifest list dict
+            manifest_list (bytes): Raw v2s2 manifest list bytes
 
         Returns:
             ContainerImageManifestListV2S2: A v2s2 manifest list object
         """
         return ContainerImageManifestListV2S2(manifest_list)
 
-    def create_oci_manifest(manifest: Dict[str, Any]) -> ContainerImageManifestOCI:
+    def create_oci_manifest(manifest: bytes) -> ContainerImageManifestOCI:
         """
         Given a manifest response from the distribution registry API,
         create a ContainerImageManifestOCI, or raise an exception if it's
         invalid
 
         Args:
-            manifest (Dict[str, Any]): An OCI manifest dict
+            manifest (bytes): Raw OCI manifest bytes
 
         Returns:
             ContainerImageManifestOCI: An OCI manifest object
         """
         return ContainerImageManifestOCI(manifest)
 
-    def create_oci_image_index(index: Dict[str, Any]) -> ContainerImageIndexOCI:
+    def create_oci_image_index(index: bytes) -> ContainerImageIndexOCI:
         """
         Given an image index response from the distribution registry API,
         create a ContainerImageIndexOCI, or raise an exception if it's invalid
 
         Args:
-            index (Dict[str, Any]): An OCI image index dict
+            index (bytes): Raw OCI image index bytes
 
         Returns:
             ContainerImageIndexOCI: An OCI image index object
         """
         return ContainerImageIndexOCI(index)
 
-    def create(manifest_or_list: Dict[str, Any]) -> Union[
+    def create(manifest_or_list: bytes) -> Union[
             ContainerImageManifestV2S2,
             ContainerImageManifestListV2S2,
             ContainerImageManifestOCI,
@@ -91,35 +91,37 @@ class ContainerImageManifestFactory:
         - ContainerImageIndexOCI
 
         Args:
-            manifest_or_list (Dict[str, Any]): A manifest or manifest list dict
+            manifest_or_list (bytes): Raw manifest or manifest list bytes
 
         Returns:
             Union[ContainerImageManifestV2S2,ContainerImageManifestListV2S2,ContainerImageManifestOCI,ContainerImageIndexOCI]: Manifest or manifest list objects for the OCI & v2s2 specs
         """
+        loaded = json.loads(manifest_or_list)
+
         # Validate whether this is a v2s2 manifest
         is_v2s2_manifest, vm_err = ContainerImageManifestV2S2.validate_static(
-            manifest_or_list
+            loaded
         )
         if is_v2s2_manifest:
             return ContainerImageManifestV2S2(manifest_or_list)
 
         # If not, validate whether this is a v2s2 manifest list
         is_v2s2_list, l_err = ContainerImageManifestListV2S2.validate_static(
-            manifest_or_list
+            loaded
         )
         if is_v2s2_list:
             return ContainerImageManifestListV2S2(manifest_or_list)
         
         # If not, validate whether this is an OCI manifest
         is_oci_manifest, om_err = ContainerImageManifestOCI.validate_static(
-            manifest_or_list
+            loaded
         )
         if is_oci_manifest:
             return ContainerImageManifestOCI(manifest_or_list)
 
         # If not, validate whether this is an OCI image index
         is_oci_index, i_err = ContainerImageIndexOCI.validate_static(
-            manifest_or_list
+            loaded
         )
         if is_oci_index:
             return ContainerImageIndexOCI(manifest_or_list)
@@ -127,5 +129,5 @@ class ContainerImageManifestFactory:
         # If neither, raise a ValidationError
         raise ContainerImageError(
             "Invalid schema, not v2s2 or OCI manifest or list: " + \
-                f"{json.dumps(manifest_or_list)}"
+                f"{json.dumps(json.loads(manifest_or_list))}"
         )
