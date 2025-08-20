@@ -7,6 +7,7 @@ metadata and mutating the image through the registry API.
 """
 
 from __future__ import annotations
+import asyncio
 import json
 import requests
 from typing                         import  List, Dict, Any, \
@@ -16,7 +17,9 @@ from image.client                   import  ContainerImageRegistryClient, \
                                             DEFAULT_CHUNK_SIZE
 from image.config                   import  ContainerImageConfig
 from image.containerimageinspect    import  ContainerImageInspect
+from image.descriptor               import  ContainerImageDescriptor
 from image.errors                   import  ContainerImageError
+from image.manifest                 import  ContainerImageManifest
 from image.manifestfactory          import  ContainerImageManifestFactory
 from image.manifestlist             import  ContainerImageManifestList
 from image.oci                      import  ContainerImageManifestOCI, \
@@ -712,10 +715,386 @@ class ContainerImage(ContainerImageReference):
         with open(f"{path}/manifest.json", 'w') as manifest_file:
             manifest_file.write(str(manifest))
 
+    def copy_blob(
+            self,
+            dest: Union[str, ContainerImageReference],
+            desc: ContainerImageDescriptor,
+            auth: Dict[str, Any],
+            chunked: bool=True,
+            chunk_size: int=DEFAULT_CHUNK_SIZE,
+            src_skip_verify: bool=False,
+            dest_skip_verify: bool=False,
+            src_http: bool=False,
+            dest_http: bool=False
+        ):
+        """
+        Copies a blob to a new registry
+
+        Args:
+            dest (Union[str, ContainerImageReference]): The destination location to copy the blob
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            chunked (bool): Whether to upload blobs in chunks or monolithically
+            chunk_size (int): The chunk size to use for chunked blob uploads, measured in bytes
+            src_skip_verify (bool): Insecure, skip TLS cert verification for the source reference
+            dest_skip_verify (bool): Insecure, skip TLS cert verification for the destination reference
+            src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
+            dest_http (bool): Insecure, whether to use HTTP (not HTTPs) for the destination reference
+        """
+        # Get the source blob
+        blob = ContainerImageRegistryClient.get_blob(
+            self,
+            desc,
+            auth,
+            skip_verify=src_skip_verify,
+            http=src_http
+        )
+
+        # Initialize a blob upload for the blob
+        blob_upload_url = ContainerImageRegistryClient.initialize_upload(
+            dest,
+            auth,
+            skip_verify=dest_skip_verify,
+            http=dest_http
+        )
+
+        # Upload each blob
+        ContainerImageRegistryClient.upload_blob(
+            dest,
+            blob_upload_url,
+            desc,
+            blob,
+            chunked=chunked,
+            chunk_size=chunk_size,
+            auth=auth,
+            skip_verify=dest_skip_verify,
+            http=dest_http
+        )
+
+    async def _copy_blobs_parallel(
+            self,
+            dest: Union[str, ContainerImageReference],
+            descriptors: list[ContainerImageDescriptor],
+            auth: Dict[str, Any],
+            chunked: bool=True,
+            chunk_size: int=DEFAULT_CHUNK_SIZE,
+            src_skip_verify: bool=False,
+            dest_skip_verify: bool=False,
+            src_http: bool=False,
+            dest_http: bool=False
+        ):
+        """
+        Copies a collection of blobs to a new registry in parallel
+
+        Args:
+            dest (Union[str, ContainerImageReference]): The destination location to copy the blobs
+            descriptors (list[ContainerImageDescriptor]): The blob descriptors to copy
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            chunked (bool): Whether to upload blobs in chunks or monolithically
+            chunk_size (int): The chunk size to use for chunked blob uploads, measured in bytes
+            src_skip_verify (bool): Insecure, skip TLS cert verification for the source reference
+            dest_skip_verify (bool): Insecure, skip TLS cert verification for the destination reference
+            src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
+            dest_http (bool): Insecure, whether to use HTTP (not HTTPs) for the destination reference
+        """
+        coroutines = []
+        for desc in descriptors:
+            coroutine = asyncio.to_thread(
+                self.copy_blob,
+                dest=dest,
+                desc=desc,
+                auth=auth,
+                chunked=chunked,
+                chunk_size=chunk_size,
+                src_skip_verify=src_skip_verify,
+                dest_skip_verify=dest_skip_verify,
+                src_http=src_http,
+                dest_http=dest_http
+            )
+            coroutines.append(coroutine)
+        await asyncio.gather(*coroutines)
+
+    def _copy_blobs_sequential(
+            self,
+            dest: Union[str, ContainerImageReference],
+            descriptors: list[ContainerImageDescriptor],
+            auth: Dict[str, Any],
+            chunked: bool=True,
+            chunk_size: int=DEFAULT_CHUNK_SIZE,
+            src_skip_verify: bool=False,
+            dest_skip_verify: bool=False,
+            src_http: bool=False,
+            dest_http: bool=False
+        ):
+        """
+        Copies a collection of blobs to a new registry sequentially
+
+        Args:
+            dest (Union[str, ContainerImageReference]): The destination location to copy the blobs
+            descriptors (list[ContainerImageDescriptor]): The blob descriptors to copy
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            chunked (bool): Whether to upload blobs in chunks or monolithically
+            chunk_size (int): The chunk size to use for chunked blob uploads, measured in bytes
+            src_skip_verify (bool): Insecure, skip TLS cert verification for the source reference
+            dest_skip_verify (bool): Insecure, skip TLS cert verification for the destination reference
+            src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
+            dest_http (bool): Insecure, whether to use HTTP (not HTTPs) for the destination reference
+        """
+        for desc in descriptors:
+            self.copy_blob(
+                dest=dest,
+                desc=desc,
+                auth=auth,
+                chunked=chunked,
+                chunk_size=chunk_size,
+                src_skip_verify=src_skip_verify,
+                dest_skip_verify=dest_skip_verify,
+                src_http=src_http,
+                dest_http=dest_http
+            )
+
+    def copy_manifest(
+            self,
+            dest: Union[str, ContainerImageReference],
+            auth: Dict[str, Any],
+            manifest: Union[ContainerImageManifest, None]=None,
+            parallel: bool=True,
+            chunked: bool=True,
+            chunk_size: int=DEFAULT_CHUNK_SIZE,
+            src_skip_verify: bool=False,
+            dest_skip_verify: bool=False,
+            src_http: bool=False,
+            dest_http: bool=False
+        ):
+        """
+        Copies an architecture manifest to a new registry
+
+        Args:
+            dest (Union[str, ContainerImageReference]): The destination location to copy the image
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            manifest (Union[ContainerImageManifest, None]): Optionally pass in the manifest up-front
+            parallel (bool): Whether to upload blobs in parallel
+            chunked (bool): Whether to upload blobs in chunks or monolithically
+            chunk_size (int): The chunk size to use for chunked blob uploads, measured in bytes
+            src_skip_verify (bool): Insecure, skip TLS cert verification for the source reference
+            dest_skip_verify (bool): Insecure, skip TLS cert verification for the destination reference
+            src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
+            dest_http (bool): Insecure, whether to use HTTP (not HTTPs) for the destination reference
+        """
+        if manifest is None:
+            # Download the architecture manifest
+            manifest = self.get_manifest(
+                auth,
+                skip_verify=src_skip_verify,
+                http=src_http
+            )
+
+        # Ensure this is a single-arch manifest
+        if ContainerImage.is_manifest_list_static(manifest):
+            raise ContainerImageError(
+                f"Expected manifest, got manifest list: {str(self)}"
+            )
+
+        # Copy each blob
+        descriptors = manifest.get_layer_descriptors()
+        arch_config_desc = manifest.get_config_descriptor()
+        descriptors.append(arch_config_desc)
+        if parallel:
+            asyncio.run(
+                self._copy_blobs_parallel(
+                    dest=dest,
+                    descriptors=descriptors,
+                    auth=auth,
+                    chunked=chunked,
+                    chunk_size=chunk_size,
+                    src_skip_verify=src_skip_verify,
+                    dest_skip_verify=dest_skip_verify,
+                    src_http=src_http,
+                    dest_http=dest_http
+                )
+            )
+        else:
+            self._copy_blobs_sequential(
+                dest=dest,
+                descriptors=descriptors,
+                auth=auth,
+                chunked=chunked,
+                chunk_size=chunk_size,
+                src_skip_verify=src_skip_verify,
+                dest_skip_verify=dest_skip_verify,
+                src_http=src_http,
+                dest_http=dest_http
+            )
+
+        # Upload each manifest
+        ContainerImageRegistryClient.upload_manifest(
+            dest,
+            manifest.__json__(),
+            manifest.get_media_type(),
+            auth,
+            skip_verify=dest_skip_verify,
+            http=dest_http
+        )
+
+    async def _copy_manifests_parallel(
+            self,
+            dest: Union[str, ContainerImageReference],
+            auth: Dict[str, Any],
+            manifest_list: Union[ContainerImageManifestList, None],
+            chunked: bool=True,
+            chunk_size: int=DEFAULT_CHUNK_SIZE,
+            src_skip_verify: bool=False,
+            dest_skip_verify: bool=False,
+            src_http: bool=False,
+            dest_http: bool=False
+        ):
+        """
+        """
+        coroutines = []
+        for entry in manifest_list.get_entries():
+            manifest_src = ContainerImage(
+                f"{self.get_name()}@{entry.get_digest()}"
+            )
+            manifest_dest = ContainerImage(
+                f"{dest.get_name()}@{entry.get_digest()}"
+            )
+            coroutine = asyncio.to_thread(
+                manifest_src.copy_manifest,
+                dest=manifest_dest,
+                auth=auth,
+                manifest=None,
+                parallel=True,
+                chunked=chunked,
+                chunk_size=chunk_size,
+                src_skip_verify=src_skip_verify,
+                dest_skip_verify=dest_skip_verify,
+                src_http=src_http,
+                dest_http=dest_http
+            )
+            coroutines.append(coroutine)
+        await asyncio.gather(*coroutines)
+
+    def _copy_manifests_sequential(
+            self,
+            dest: Union[str, ContainerImageReference],
+            auth: Dict[str, Any],
+            manifest_list: Union[ContainerImageManifestList, None],
+            chunked: bool=True,
+            chunk_size: int=DEFAULT_CHUNK_SIZE,
+            src_skip_verify: bool=False,
+            dest_skip_verify: bool=False,
+            src_http: bool=False,
+            dest_http: bool=False
+        ):
+        """
+        """
+        for entry in manifest_list.get_entries():
+            # Create a new ContainerImage for each manifest
+            manifest_src = ContainerImage(
+                f"{self.get_name()}@{entry.get_digest()}"
+            )
+            manifest_dest = ContainerImage(
+                f"{dest.get_name()}@{entry.get_digest()}"
+            )
+
+            # Copy the manifest
+            manifest_src.copy_manifest(
+                dest=manifest_dest,
+                auth=auth,
+                manifest=None,
+                parallel=False,
+                chunked=chunked,
+                chunk_size=chunk_size,
+                src_skip_verify=src_skip_verify,
+                dest_skip_verify=dest_skip_verify,
+                src_http=src_http,
+                dest_http=dest_http
+            )
+
+    def copy_manifest_list(
+            self,
+            dest: Union[str, ContainerImageReference],
+            auth: Dict[str, Any],
+            manifest_list: Union[ContainerImageManifestList, None],
+            parallel: bool=True,
+            chunked: bool=True,
+            chunk_size: int=DEFAULT_CHUNK_SIZE,
+            src_skip_verify: bool=False,
+            dest_skip_verify: bool=False,
+            src_http: bool=False,
+            dest_http: bool=False
+        ):
+        """
+        Copies a manifest list to a new registry
+
+        Args:
+            dest (Union[str, ContainerImageReference]): The destination location to copy the image
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            manifest_list (Union[ContainerImageManifestList, None]): Optionally pass in the manifest list up-front
+            parallel (bool): Whether to upload blobs in parallel
+            chunked (bool): Whether to upload blobs in chunks or monolithically
+            chunk_size (int): The chunk size to use for chunked blob uploads, measured in bytes
+            src_skip_verify (bool): Insecure, skip TLS cert verification for the source reference
+            dest_skip_verify (bool): Insecure, skip TLS cert verification for the destination reference
+            src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
+            dest_http (bool): Insecure, whether to use HTTP (not HTTPs) for the destination reference
+        """
+        if manifest_list is None:
+            # Download the manifest list
+            manifest_list = self.get_manifest(
+                auth,
+                skip_verify=src_skip_verify,
+                http=src_http
+            )
+
+        # Ensure this is a manifest list
+        if not ContainerImage.is_manifest_list_static(manifest_list):
+            raise ContainerImageError(
+                f"Expected manifest list, got manifest: {str(self)}"
+            )
+
+        # Copy each manifest
+        if parallel:
+            asyncio.run(
+                self._copy_manifests_parallel(
+                    dest,
+                    auth,
+                    manifest_list=manifest_list,
+                    chunked=chunked,
+                    chunk_size=chunk_size,
+                    src_skip_verify=src_skip_verify,
+                    dest_skip_verify=dest_skip_verify,
+                    src_http=src_http,
+                    dest_http=dest_http
+                )
+            )
+        else:
+            self._copy_manifests_sequential(
+                dest,
+                auth,
+                manifest_list=manifest_list,
+                chunked=chunked,
+                chunk_size=chunk_size,
+                src_skip_verify=src_skip_verify,
+                dest_skip_verify=dest_skip_verify,
+                src_http=src_http,
+                dest_http=dest_http
+            )
+        
+        # Upload the top-level manifest list
+        ContainerImageRegistryClient.upload_manifest(
+            dest,
+            manifest_list.__json__(),
+            manifest_list.get_media_type(),
+            auth,
+            skip_verify=dest_skip_verify,
+            http=dest_http
+        )
+
     def copy(
             self,
             dest: Union[str, ContainerImageReference],
             auth: Dict[str, Any],
+            parallel: bool=True,
             chunked: bool=True,
             chunk_size: int=DEFAULT_CHUNK_SIZE,
             src_skip_verify: bool=False,
@@ -729,6 +1108,7 @@ class ContainerImage(ContainerImageReference):
         Args:
             dest (Union[str, ContainerImageReference]): The destination location to copy the image
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            parallel (bool): Whether to upload blobs in parallel
             chunked (bool): Whether to upload blobs in chunks or monolithically
             chunk_size (int): The chunk size to use for chunked blob uploads, measured in bytes
             src_skip_verify (bool): Insecure, skip TLS cert verification for the source reference
@@ -751,125 +1131,31 @@ class ContainerImage(ContainerImageReference):
             http=src_http
         )
         if ContainerImage.is_manifest_list_static(manifest):
-            for entry in manifest.get_entries():
-                # Create a new ContainerImage for each manifest
-                manifest_img = ContainerImage(
-                    f"{self.get_name()}@{entry.get_digest()}"
-                )
-
-                # Download each manifest
-                arch_manifest = manifest_img.get_manifest(
-                    auth,
-                    skip_verify=src_skip_verify,
-                    http=src_http
-                )
-
-                # Download each layer
-                arch_layer_desc = arch_manifest.get_layer_descriptors()
-                for desc in arch_layer_desc:
-                    layer = ContainerImageRegistryClient.get_blob(
-                        self,
-                        desc,
-                        auth,
-                        skip_verify=src_skip_verify,
-                        http=src_http
-                    )
-
-                    # Initialize a blob upload for the layer
-                    layer_upload_url = ContainerImageRegistryClient.initialize_upload(
-                        dest,
-                        auth,
-                        skip_verify=dest_skip_verify,
-                        http=dest_http
-                    )
-
-                    # Upload each layer
-                    ContainerImageRegistryClient.upload_blob(
-                        dest,
-                        layer_upload_url,
-                        desc,
-                        layer,
-                        chunked=chunked,
-                        chunk_size=chunk_size,
-                        auth=auth,
-                        skip_verify=dest_skip_verify,
-                        http=dest_http
-                    )
-                
-                # Download and upload each config
-                arch_config_desc = arch_manifest.get_config_descriptor()
-                arch_config = ContainerImageRegistryClient.get_blob(
-                    self,
-                    arch_config_desc,
-                    auth,
-                    skip_verify=src_skip_verify,
-                    http=src_http
-                )
-                config_upload_url = ContainerImageRegistryClient.initialize_upload(
-                    dest,
-                    auth,
-                    skip_verify=dest_skip_verify,
-                    http=dest_http
-                )
-                ContainerImageRegistryClient.upload_blob(
-                    dest,
-                    config_upload_url,
-                    arch_config_desc,
-                    arch_config,
-                    chunked=chunked,
-                    chunk_size=chunk_size,
-                    auth=auth,
-                    skip_verify=dest_skip_verify,
-                    http=dest_http
-                )
-
-                # Upload each manifest
-                ContainerImageRegistryClient.upload_manifest(
-                    dest,
-                    arch_manifest.__json__(),
-                    arch_manifest.get_media_type(),
-                    auth,
-                    skip_verify=dest_skip_verify,
-                    http=dest_http
-                )
+            self.copy_manifest_list(
+                dest=dest,
+                auth=auth,
+                manifest_list=manifest,
+                parallel=parallel,
+                chunked=chunked,
+                chunk_size=chunk_size,
+                src_skip_verify=src_skip_verify,
+                dest_skip_verify=dest_skip_verify,
+                src_http=src_http,
+                dest_http=dest_http
+            )
         else:
-            # Download each layer and save as <digest>
-            layer_desc = manifest.get_layer_descriptors()
-            for desc in layer_desc:
-                layer = ContainerImageRegistryClient.get_blob(
-                    self, desc, auth, skip_verify=src_skip_verify, http=src_http
-                )
-
-                # Initialize a blob upload for the layer
-                layer_upload_url = ContainerImageRegistryClient.initialize_upload(
-                    dest,
-                    auth,
-                    skip_verify=dest_skip_verify,
-                    http=dest_http
-                )
-
-                # Upload each layer
-                ContainerImageRegistryClient.upload_blob(
-                    dest,
-                    layer_upload_url,
-                    desc,
-                    layer,
-                    chunked=chunked,
-                    chunk_size=chunk_size,
-                    auth=auth,
-                    skip_verify=dest_skip_verify,
-                    http=dest_http
-                )
-        
-        # Upload the top-level manifest as manifest.json
-        ContainerImageRegistryClient.upload_manifest(
-            dest,
-            manifest.__json__(),
-            manifest.get_media_type(),
-            auth,
-            skip_verify=dest_skip_verify,
-            http=dest_http
-        )
+            self.copy_manifest(
+                dest=dest,
+                auth=auth,
+                manifest=manifest,
+                parallel=parallel,
+                chunked=chunked,
+                chunk_size=chunk_size,
+                src_skip_verify=src_skip_verify,
+                dest_skip_verify=dest_skip_verify,
+                src_http=src_http,
+                dest_http=dest_http
+            )
 
     def delete(
             self,
