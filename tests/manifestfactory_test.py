@@ -1,4 +1,5 @@
 import copy
+import json
 from jsonschema                 import  ValidationError
 from image.errors               import  ContainerImageError
 from image.oci                  import  ContainerImageManifestOCI
@@ -71,7 +72,7 @@ def test_container_image_manifest_factory_create_v2s2_manifest():
     exc = None
     try:
         manifest = ContainerImageManifestFactory.create_v2s2_manifest(
-            {}
+            json.dumps({}).encode('utf-8')
         )
     except Exception as e:
         exc = e
@@ -80,7 +81,7 @@ def test_container_image_manifest_factory_create_v2s2_manifest():
 
     # Ensure manifest is created when valid v2s2 manifest is passed
     manifest = ContainerImageManifestFactory.create_v2s2_manifest(
-        copy.deepcopy(CNCF_MANIFEST_EXAMPLE)
+        json.dumps(copy.deepcopy(CNCF_MANIFEST_EXAMPLE)).encode('utf-8')
     )
     assert isinstance(manifest, ContainerImageManifestV2S2)
 
@@ -88,7 +89,9 @@ def test_container_image_manifest_factory_create_v2s2_manifest():
     exc = None
     try:
         manifest = ContainerImageManifestFactory.create_v2s2_manifest(
-            copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+            json.dumps(
+                copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+            ).encode('utf-8')
         )
     except Exception as e:
         exc = e
@@ -99,7 +102,9 @@ def test_container_image_manifest_factory_create_v2s2_manifest():
     exc = None
     try:
         manifest = ContainerImageManifestFactory.create_v2s2_manifest(
-            copy.deepcopy(ATTESTATION_AMD64_ATTESTATION_MANIFEST)
+            json.dumps(
+                copy.deepcopy(ATTESTATION_AMD64_ATTESTATION_MANIFEST)
+            ).encode('utf-8')
         )
     except Exception as e:
         exc = e
@@ -110,7 +115,9 @@ def test_container_image_manifest_factory_create_v2s2_manifest():
     exc = None
     try:
         manifest = ContainerImageManifestFactory.create_v2s2_manifest(
-            copy.deepcopy(ATTESTATION_MANIFEST_LIST_EXAMPLE)
+            json.dumps(
+                copy.deepcopy(ATTESTATION_MANIFEST_LIST_EXAMPLE)
+            ).encode('utf-8')
         )
     except Exception as e:
         exc = e
@@ -122,7 +129,7 @@ def test_container_image_manifest_factory_create_oci_manifest():
     exc = None
     try:
         manifest = ContainerImageManifestFactory.create_oci_manifest(
-            {}
+            json.dumps({}).encode('utf-8')
         )
     except Exception as e:
         exc = e
@@ -131,7 +138,9 @@ def test_container_image_manifest_factory_create_oci_manifest():
 
     # Ensure manifest is created when valid OCI manifest is passed
     manifest = ContainerImageManifestFactory.create_oci_manifest(
-        copy.deepcopy(ATTESTATION_AMD64_ATTESTATION_MANIFEST)
+        json.dumps(
+            copy.deepcopy(ATTESTATION_AMD64_ATTESTATION_MANIFEST)
+        ).encode('utf-8')
     )
     assert isinstance(manifest, ContainerImageManifestOCI)
 
@@ -139,7 +148,9 @@ def test_container_image_manifest_factory_create_oci_manifest():
     exc = None
     try:
         manifest = ContainerImageManifestFactory.create_oci_manifest(
-            copy.deepcopy(ATTESTATION_MANIFEST_LIST_EXAMPLE)
+            json.dumps(
+                copy.deepcopy(ATTESTATION_MANIFEST_LIST_EXAMPLE)
+            ).encode('utf-8')
         )
     except Exception as e:
         exc = e
@@ -150,7 +161,9 @@ def test_container_image_manifest_factory_create_oci_manifest():
     exc = None
     try:
         manifest = ContainerImageManifestFactory.create_oci_manifest(
-            copy.deepcopy(CNCF_MANIFEST_EXAMPLE)
+            json.dumps(
+                copy.deepcopy(CNCF_MANIFEST_EXAMPLE)
+            ).encode('utf-8')
         )
     except Exception as e:
         exc = e
@@ -161,7 +174,9 @@ def test_container_image_manifest_factory_create_oci_manifest():
     exc = None
     try:
         manifest = ContainerImageManifestFactory.create_oci_manifest(
-            copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+            json.dumps(
+                copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+            ).encode('utf-8')
         )
     except Exception as e:
         exc = e
@@ -173,7 +188,9 @@ def test_container_image_manifest_factory_create_v2s2_manifest_list():
     exc = None
     try:
         manifest_list = ContainerImageManifestFactory.create_v2s2_manifest_list(
-            {}
+            json.dumps(
+                {}
+            ).encode('utf-8')
         )
     except Exception as e:
         exc = e
@@ -182,7 +199,9 @@ def test_container_image_manifest_factory_create_v2s2_manifest_list():
 
     # Ensure manifest list is created when valid v2s2 manifest list is passed
     manifest_list = ContainerImageManifestFactory.create_v2s2_manifest_list(
-        copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+        ).encode('utf-8')
     )
     assert isinstance(manifest_list, ContainerImageManifestListV2S2)
 
@@ -190,7 +209,9 @@ def test_container_image_manifest_factory_create_v2s2_manifest_list():
     exc = None
     try:
         manifest_list = ContainerImageManifestFactory.create_v2s2_manifest_list(
-            copy.deepcopy(CNCF_MANIFEST_EXAMPLE)
+            json.dumps(
+                copy.deepcopy(CNCF_MANIFEST_EXAMPLE)
+            ).encode('utf-8')
         )
     except Exception as e:
         exc = e
@@ -201,7 +222,9 @@ def test_container_image_manifest_factory_create_v2s2_manifest_list():
     exc = None
     try:
         manifest_list = ContainerImageManifestFactory.create_v2s2_manifest_list(
-            copy.deepcopy(ATTESTATION_MANIFEST_LIST_EXAMPLE)
+            json.dumps(
+                copy.deepcopy(ATTESTATION_MANIFEST_LIST_EXAMPLE)
+            ).encode('utf-8')
         )
     except Exception as e:
         exc = e
@@ -212,7 +235,9 @@ def test_container_image_manifest_factory_create_v2s2_manifest_list():
     exc = None
     try:
         manifest_list = ContainerImageManifestFactory.create_v2s2_manifest_list(
-            copy.deepcopy(ATTESTATION_AMD64_ATTESTATION_MANIFEST)
+            json.dumps(
+                copy.deepcopy(ATTESTATION_AMD64_ATTESTATION_MANIFEST)
+            ).encode('utf-8')
         )
     except Exception as e:
         exc = e
@@ -224,7 +249,7 @@ def test_container_image_manifest_factory_create_oci_image_index():
     exc = None
     try:
         manifest_list = ContainerImageManifestFactory.create_oci_image_index(
-            {}
+            json.dumps({}).encode('utf-8')
         )
     except Exception as e:
         exc = e
@@ -233,7 +258,9 @@ def test_container_image_manifest_factory_create_oci_image_index():
 
     # Ensure image index is created when valid OCI image index is passed
     manifest_list = ContainerImageManifestFactory.create_oci_image_index(
-        copy.deepcopy(ATTESTATION_MANIFEST_LIST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(ATTESTATION_MANIFEST_LIST_EXAMPLE)
+        ).encode('utf-8')
     )
     assert isinstance(manifest_list, ContainerImageIndexOCI)
 
@@ -241,7 +268,9 @@ def test_container_image_manifest_factory_create_oci_image_index():
     exc = None
     try:
         manifest_list = ContainerImageManifestFactory.create_oci_image_index(
-            copy.deepcopy(CNCF_MANIFEST_EXAMPLE)
+            json.dumps(
+                copy.deepcopy(CNCF_MANIFEST_EXAMPLE)
+            ).encode('utf-8')
         )
     except Exception as e:
         exc = e
@@ -252,7 +281,9 @@ def test_container_image_manifest_factory_create_oci_image_index():
     exc = None
     try:
         manifest_list = ContainerImageManifestFactory.create_oci_image_index(
-            copy.deepcopy(ATTESTATION_AMD64_ATTESTATION_MANIFEST)
+            json.dumps(
+                copy.deepcopy(ATTESTATION_AMD64_ATTESTATION_MANIFEST)
+            ).encode('utf-8')
         )
     except Exception as e:
         exc = e
@@ -263,7 +294,9 @@ def test_container_image_manifest_factory_create_oci_image_index():
     exc = None
     try:
         manifest_list = ContainerImageManifestFactory.create_oci_image_index(
-            copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+            json.dumps(
+                copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+            ).encode('utf-8')
         )
     except Exception as e:
         exc = e
@@ -275,7 +308,7 @@ def test_container_image_manifest_factory_create():
     exc = None
     try:
         nothing = ContainerImageManifestFactory.create(
-            {}
+            json.dumps({}).encode('utf-8')
         )
     except Exception as e:
         exc = e
@@ -284,24 +317,32 @@ def test_container_image_manifest_factory_create():
 
     # Ensure v2s2 manifest list is created when valid v2s2 manifest list is passed
     manifest_list = ContainerImageManifestFactory.create(
-        copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+        ).encode('utf-8')
     )
     assert isinstance(manifest_list, ContainerImageManifestListV2S2)
 
     # Ensure v2s2 manifest is created when valid v2s2 manifest is passed
     v2s2_manifest = ContainerImageManifestFactory.create(
-        copy.deepcopy(CNCF_MANIFEST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(CNCF_MANIFEST_EXAMPLE)
+        ).encode('utf-8')
     )
     assert isinstance(v2s2_manifest, ContainerImageManifestV2S2)
 
     # Ensure OCI image index is created when valid OCI image index is passed
     image_index = ContainerImageManifestFactory.create(
-        copy.deepcopy(ATTESTATION_MANIFEST_LIST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(ATTESTATION_MANIFEST_LIST_EXAMPLE)
+        ).encode('utf-8')
     )
     assert isinstance(image_index, ContainerImageIndexOCI)
 
     # Ensure OCI manifest is created when valid OCI manifest is passed
     oci_manifest = ContainerImageManifestFactory.create(
-        copy.deepcopy(ATTESTATION_AMD64_ATTESTATION_MANIFEST)
+        json.dumps(
+            copy.deepcopy(ATTESTATION_AMD64_ATTESTATION_MANIFEST)
+        ).encode('utf-8')
     )
     assert isinstance(oci_manifest, ContainerImageManifestOCI)

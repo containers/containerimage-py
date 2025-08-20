@@ -20,14 +20,15 @@ class ContainerImageManifestList:
     ContainerImageManifestListOCI since the two specs are very similar, with the
     v2s2 spec being more restrictive than the OCI spec.
     """
-    def __init__(self, manifest_list: Dict[str, Any]):
+    def __init__(self, manifest_list: bytes):
         """
         Constructor for the ContainerImageManifestList class
 
         Args:
-            manifest_list (Dict[str, Any]): The manifest list loaded into a dict
+            manifest_list (bytes): The raw manifest list bytes
         """
-        self.manifest_list = manifest_list
+        self.raw_manifest_list = manifest_list
+        self.manifest_list = json.loads(manifest_list)
 
     def get_entries(self) -> List[ContainerImageManifestListEntry]:
         """
@@ -245,6 +246,15 @@ class ContainerImageManifestList:
         
         # Return the list of manifests
         return manifest_list_size
+
+    def raw(self) -> bytes:
+        """
+        Returns the raw manifest list bytes
+
+        Returns:
+            bytes: The raw manifest list bytes
+        """
+        return self.raw_manifest_list
 
     def __str__(self) -> str:
         """

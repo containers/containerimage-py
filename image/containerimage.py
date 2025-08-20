@@ -740,6 +740,7 @@ class ContainerImage(ContainerImageReference):
             src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
             dest_http (bool): Insecure, whether to use HTTP (not HTTPs) for the destination reference
         """
+        print(f"Copying blob: {desc.get_digest()}")
         # Get the source blob
         blob = ContainerImageRegistryClient.get_blob(
             self,
@@ -769,6 +770,7 @@ class ContainerImage(ContainerImageReference):
             skip_verify=dest_skip_verify,
             http=dest_http
         )
+        print(f"Done copying blob: {desc.get_digest()}")
 
     async def _copy_blobs_parallel(
             self,
@@ -928,7 +930,7 @@ class ContainerImage(ContainerImageReference):
         # Upload each manifest
         ContainerImageRegistryClient.upload_manifest(
             dest,
-            manifest.__json__(),
+            manifest.raw(),
             manifest.get_media_type(),
             auth,
             skip_verify=dest_skip_verify,
@@ -1083,7 +1085,7 @@ class ContainerImage(ContainerImageReference):
         # Upload the top-level manifest list
         ContainerImageRegistryClient.upload_manifest(
             dest,
-            manifest_list.__json__(),
+            manifest_list.raw(),
             manifest_list.get_media_type(),
             auth,
             skip_verify=dest_skip_verify,

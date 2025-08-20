@@ -224,7 +224,9 @@ def test_container_image_v2s2_manifest_instantiation():
     # Ensure exception is thrown on instantiation using invalid schema
     exc = None
     try:
-        manifest = ContainerImageManifestV2S2({})
+        manifest = ContainerImageManifestV2S2(
+            json.dumps({}).encode('utf-8')
+        )
     except Exception as e:
         exc = e
     assert exc != None
@@ -232,14 +234,18 @@ def test_container_image_v2s2_manifest_instantiation():
 
     # Ensure ContainerImageManifestV2S2 is returned when using valid schema
     manifest = ContainerImageManifestV2S2(
-        copy.deepcopy(CNCF_MANIFEST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(CNCF_MANIFEST_EXAMPLE)
+        ).encode('utf-8')
     )
     assert isinstance(manifest, ContainerImageManifestV2S2)
 
     # Ensure generic ContainerImageManifest can be converted into a
     # ContainerImageManifestV2S2
     generic_manifest = ContainerImageManifest(
-        copy.deepcopy(CNCF_MANIFEST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(CNCF_MANIFEST_EXAMPLE)
+        ).encode('utf-8')
     )
     manifest = ContainerImageManifestV2S2.from_manifest(
         generic_manifest
@@ -249,7 +255,9 @@ def test_container_image_v2s2_manifest_instantiation():
 def test_container_image_v2s2_manifest_instance_validation():
     # Ensure ContainerImageManifestV2S2 instantiates and is valid post-instantiation
     manifest = ContainerImageManifestV2S2(
-        copy.deepcopy(CNCF_MANIFEST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(CNCF_MANIFEST_EXAMPLE)
+        ).encode('utf-8')
     )
     valid, err = manifest.validate()
     assert valid == True
@@ -388,7 +396,9 @@ def test_container_image_v2s2_manifest_list_instantiation():
     # Ensure exception is thrown on instantiation using invalid schema
     exc = None
     try:
-        manifest_list = ContainerImageManifestListV2S2({})
+        manifest_list = ContainerImageManifestListV2S2(
+            json.dumps({}).encode('utf-8')
+        )
     except Exception as e:
         exc = e
     assert exc != None
@@ -396,14 +406,18 @@ def test_container_image_v2s2_manifest_list_instantiation():
 
     # Ensure ContainerImageManifestListV2S2 is returned when using valid schema
     manifest_list = ContainerImageManifestListV2S2(
-        copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+        ).encode('utf-8')
     )
     assert isinstance(manifest_list, ContainerImageManifestListV2S2)
 
 def test_container_image_v2s2_manifest_list_instance_validation():
     # Ensure ContainerImageManifestListV2S2 instantiates and is valid post-instantiation
     manifest_list = ContainerImageManifestListV2S2(
-        copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+        ).encode('utf-8')
     )
     valid, err = manifest_list.validate()
     assert valid == True
@@ -443,7 +457,9 @@ def test_container_image_v2s2_manifest_list_instance_validation():
 def test_container_image_v2s2_manifest_list_get_entries():
     # Ensure entries match expected typing and length
     manifest_list = ContainerImageManifestListV2S2(
-        copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(CNCF_MANIFEST_LIST_EXAMPLE)
+        ).encode('utf-8')
     )
     entries = manifest_list.get_v2s2_entries()
     assert isinstance(entries, list)
@@ -469,16 +485,26 @@ def test_container_image_v2s2_manifest_list_get_manifests(mocker):
         mock_get_manifest
     )
     manifest_list = ContainerImageManifestListV2S2(
-        copy.deepcopy(REDHAT_MANIFEST_LIST_EXAMPLE)
+        json.dumps(
+            copy.deepcopy(REDHAT_MANIFEST_LIST_EXAMPLE)
+        ).encode('utf-8')
     )
     manifests = manifest_list.get_v2s2_manifests(
         MOCK_IMAGE_NAME, MOCK_REGISTRY_CREDS
     )
     expected_manifests = [
-        ContainerImageManifestV2S2(REDHAT_AMD64_MANIFEST),
-        ContainerImageManifestV2S2(REDHAT_ARM64_MANIFEST),
-        ContainerImageManifestV2S2(REDHAT_PPC64LE_MANIFEST),
-        ContainerImageManifestV2S2(REDHAT_S390X_MANIFEST)
+        ContainerImageManifestV2S2(
+            json.dumps(REDHAT_AMD64_MANIFEST).encode('utf-8')
+        ),
+        ContainerImageManifestV2S2(
+            json.dumps(REDHAT_ARM64_MANIFEST).encode('utf-8')
+        ),
+        ContainerImageManifestV2S2(
+            json.dumps(REDHAT_PPC64LE_MANIFEST).encode('utf-8')
+        ),
+        ContainerImageManifestV2S2(
+            json.dumps(REDHAT_S390X_MANIFEST).encode('utf-8')
+        )
     ]
     assert json.dumps(manifests) == json.dumps(expected_manifests)
 
