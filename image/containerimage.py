@@ -971,6 +971,12 @@ class ContainerImage(ContainerImageReference):
             manifest_dest = ContainerImage(
                 f"{dest.get_name()}@{entry.get_digest()}"
             )
+            if manifest_dest.exists(
+                auth=auth,
+                skip_verify=dest_skip_verify,
+                http=dest_http
+            ):
+                continue
             coroutine = asyncio.to_thread(
                 manifest_src.copy_manifest,
                 dest=manifest_dest,
@@ -1009,6 +1015,12 @@ class ContainerImage(ContainerImageReference):
             manifest_dest = ContainerImage(
                 f"{dest.get_name()}@{entry.get_digest()}"
             )
+            if manifest_dest.exists(
+                auth=auth,
+                skip_verify=dest_skip_verify,
+                http=dest_http
+            ):
+                continue
 
             # Copy the manifest
             manifest_src.copy_manifest(
