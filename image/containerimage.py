@@ -740,8 +740,6 @@ class ContainerImage(ContainerImageReference):
             src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
             dest_http (bool): Insecure, whether to use HTTP (not HTTPs) for the destination reference
         """
-        print(f"Copying blob: {desc.get_digest()}")
-
         # Exit early if the blob exists in the destination registry
         if ContainerImageRegistryClient.blob_exists(
                 dest,
@@ -750,7 +748,6 @@ class ContainerImage(ContainerImageReference):
                 skip_verify=src_skip_verify,
                 http=src_http
             ):
-            print(f"Blob exists: {desc.get_digest()}")
             return
         
         # Get the source blob
@@ -782,7 +779,6 @@ class ContainerImage(ContainerImageReference):
             skip_verify=dest_skip_verify,
             http=dest_http
         )
-        print(f"Done copying blob: {desc.get_digest()}")
 
     async def _copy_blobs_parallel(
             self,
