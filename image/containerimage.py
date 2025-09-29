@@ -789,7 +789,6 @@ class ContainerImage(ContainerImageReference):
             http=src_http
         )
         for chunk in res.iter_content(chunk_size=chunk_size):
-            print(f"Processing chunk {chunks_read * chunk_size} for blob {desc.get_digest()}")
             # Initialize a blob upload for the blob
             if blob_upload_url is None:
                 blob_upload_url = ContainerImageRegistryClient.initialize_upload(
