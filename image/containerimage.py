@@ -740,37 +740,83 @@ class ContainerImage(ContainerImageReference):
             src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
             dest_http (bool): Insecure, whether to use HTTP (not HTTPs) for the destination reference
         """
-        print(f"Copying blob: {desc.get_digest()}")
-        # Get the source blob
-        blob = ContainerImageRegistryClient.get_blob(
+        # Exit early if the blob exists in the destination registry
+        if ContainerImageRegistryClient.blob_exists(
+                dest,
+                desc,
+                auth,
+                skip_verify=dest_skip_verify,
+                http=dest_http
+            ):
+            return
+        
+        # If this is not a chunked upload, then upload the blob monolothically
+        if not chunked:
+            blob = ContainerImageRegistryClient.get_blob(
+                self,
+                desc,
+                auth,
+                skip_verify=src_skip_verify,
+                http=src_http
+            )
+            upload_url = ContainerImageRegistryClient.initialize_upload(
+                dest,
+                auth,
+                skip_verify=dest_skip_verify,
+                http=dest_http
+            )
+            ContainerImageRegistryClient.upload_blob(
+                dest,
+                upload_url,
+                desc,
+                blob,
+                chunked=False,
+                auth=auth,
+                skip_verify=dest_skip_verify,
+                http=dest_http
+            )
+            return
+        
+        # If this is a chunked upload, stream and upload the blob in chunks
+        chunks_read = 0
+        blob_upload_url = None
+        res = ContainerImageRegistryClient.query_blob(
             self,
             desc,
             auth,
             skip_verify=src_skip_verify,
+            stream=True,
             http=src_http
         )
-
-        # Initialize a blob upload for the blob
-        blob_upload_url = ContainerImageRegistryClient.initialize_upload(
-            dest,
-            auth,
-            skip_verify=dest_skip_verify,
-            http=dest_http
-        )
-
-        # Upload each blob
-        ContainerImageRegistryClient.upload_blob(
-            dest,
-            blob_upload_url,
-            desc,
-            blob,
-            chunked=chunked,
-            chunk_size=chunk_size,
-            auth=auth,
-            skip_verify=dest_skip_verify,
-            http=dest_http
-        )
-        print(f"Done copying blob: {desc.get_digest()}")
+        for chunk in res.iter_content(chunk_size=chunk_size):
+            # Initialize a blob upload for the blob
+            if blob_upload_url is None:
+                blob_upload_url = ContainerImageRegistryClient.initialize_upload(
+                    dest,
+                    auth,
+                    skip_verify=dest_skip_verify,
+                    http=dest_http
+                )
+            
+            # Upload the chunk
+            chunk_start = chunks_read * chunk_size
+            is_last_chunk = chunk_start >= (desc.get_size() - chunk_size)
+            next_upload_url = ContainerImageRegistryClient.upload_chunk(
+                dest,
+                blob_upload_url,
+                desc,
+                chunk,
+                chunk_start=chunk_start,
+                last_chunk=is_last_chunk,
+                auth=auth,
+                skip_verify=dest_skip_verify
+            )
+            if next_upload_url is not None:
+                blob_upload_url = next_upload_url
+            chunks_read += 1
+        
+        # Close the stream
+        res.close()
 
     async def _copy_blobs_parallel(
             self,
@@ -959,6 +1005,12 @@ class ContainerImage(ContainerImageReference):
             manifest_dest = ContainerImage(
                 f"{dest.get_name()}@{entry.get_digest()}"
             )
+            if manifest_dest.exists(
+                auth=auth,
+                skip_verify=dest_skip_verify,
+                http=dest_http
+            ):
+                continue
             coroutine = asyncio.to_thread(
                 manifest_src.copy_manifest,
                 dest=manifest_dest,
@@ -997,6 +1049,12 @@ class ContainerImage(ContainerImageReference):
             manifest_dest = ContainerImage(
                 f"{dest.get_name()}@{entry.get_digest()}"
             )
+            if manifest_dest.exists(
+                auth=auth,
+                skip_verify=dest_skip_verify,
+                http=dest_http
+            ):
+                continue
 
             # Copy the manifest
             manifest_src.copy_manifest(

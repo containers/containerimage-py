@@ -219,6 +219,7 @@ class ContainerImageRegistryClient:
             desc: ContainerImageDescriptor,
             auth: Dict[str, Any]={},
             skip_verify: bool=False,
+            stream: bool=False,
             http: bool=False
         ) -> requests.Response:
         """
@@ -264,7 +265,8 @@ class ContainerImageRegistryClient:
         res = requests.get(
             api_url,
             headers=headers,
-            verify=not skip_verify
+            verify=not skip_verify,
+            stream=stream
         )
         if res.status_code == 401 and \
             'www-authenticate' in res.headers.keys():
@@ -277,7 +279,8 @@ class ContainerImageRegistryClient:
             res = requests.get(
                 api_url,
                 headers=headers,
-                verify=not skip_verify
+                verify=not skip_verify,
+                stream=stream
             )
 
         # Raise exceptions on error status codes
@@ -455,6 +458,108 @@ class ContainerImageRegistryClient:
         # Return true if a 200 response is returned
         # Ref: https://distribution.github.io/distribution/spec/api/#existing-layers
         return res.status_code == 200
+
+    @staticmethod
+    def upload_chunk(
+            str_or_ref: Union[str, ContainerImageReference],
+            upload_url: str,
+            desc: ContainerImageDescriptor,
+            chunk: bytes,
+            chunk_start: int=0,
+            last_chunk: bool=False,
+            auth: Dict[str, Any]={},
+            skip_verify: bool=False
+        ) -> Union[str, None]:
+        """
+        Uploads a single blob chunk to the registry API
+
+        Args:
+            str_or_ref (Union[str, ContainerImageReference]): The reference under which to upload the blob chunk
+            upload_url (str): The URL of the upload, get from initialize_upload
+            desc (ContainerImageDescriptor): The blob descriptor for the blob chunk being uplaoded
+            content (bytes): The chunk to upload
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            skip_verify (bool): Insecure, skip TLS cert verification
+        
+        Returns:
+            str | None: The next uplaod URL, or none if this is the last chunk
+        """
+        # If given a str, then load as a ref
+        ref = str_or_ref
+        if isinstance(str_or_ref, str):
+            ref = ContainerImageReference(str_or_ref)
+        
+        # Construct the headers for uploading the blob
+        headers = {}
+
+        # Get the matching auth for the image from the docker config JSON
+        reg_auth, found = ContainerImageRegistryClient.get_registry_auth(
+            ref,
+            auth
+        )
+        if found:
+            headers['Authorization'] = f'Basic {reg_auth}'
+
+        # Prepare the required chunk upload headers
+        upper = chunk_start + len(chunk)
+        headers["Content-Type"] = "application/octet-stream"
+        headers["Content-Length"] = str(len(chunk))
+        headers["Content-Range"] = f"{chunk_start}-{upper - 1}"
+
+        # If this is the last chunk, we need to upload using a different
+        # HTTP method and include additional query parameters on the request
+        # to signify to the API that the upload is complete
+        chunk_upload_url = upload_url
+        if last_chunk:
+            fin_api_url = ContainerImageRegistryClient.append_query_params(
+                url=chunk_upload_url,
+                params={
+                    "digest": desc.get_digest()
+                }
+            )
+            res = requests.put(
+                fin_api_url,
+                headers=headers,
+                data=chunk,
+                verify=not skip_verify
+            )
+            if res.status_code == 401 and \
+                'www-authenticate' in res.headers.keys():
+                # Do Oauth dance if basic auth fails
+                # Ref: https://distribution.github.io/distribution/spec/auth/token/
+                scheme, token = ContainerImageRegistryClient.get_auth_token(
+                    res, reg_auth, skip_verify=skip_verify
+                )
+                headers['Authorization'] = f'{scheme} {token}'
+                res = requests.put(
+                    fin_api_url,
+                    headers=headers,
+                    data=chunk,
+                    verify=not skip_verify
+                )
+            return None
+        else:
+            res = requests.patch(
+                chunk_upload_url,
+                headers=headers,
+                data=chunk,
+                verify=not skip_verify
+            )
+            if res.status_code == 401 and \
+                'www-authenticate' in res.headers.keys():
+                # Do Oauth dance if basic auth fails
+                # Ref: https://distribution.github.io/distribution/spec/auth/token/
+                scheme, token = ContainerImageRegistryClient.get_auth_token(
+                    res, reg_auth, skip_verify=skip_verify
+                )
+                headers['Authorization'] = f'{scheme} {token}'
+                res = requests.patch(
+                    chunk_upload_url,
+                    headers=headers,
+                    data=chunk,
+                    verify=not skip_verify
+                )
+            return res.headers.get("Location")
 
     @staticmethod
     def _upload_blob_monolithic(
