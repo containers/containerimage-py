@@ -801,7 +801,7 @@ class ContainerImage(ContainerImageReference):
             chunk_start = chunks_read * chunk_size
             is_last_chunk = chunk_start >= (desc.get_size() - chunk_size)
             next_upload_url = ContainerImageRegistryClient.upload_chunk(
-                self,
+                dest,
                 blob_upload_url,
                 desc,
                 chunk,
