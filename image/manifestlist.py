@@ -6,7 +6,7 @@ implementations
 
 import re
 import json
-from image.client               import ContainerImageRegistryClient
+from image.client               import ContainerImageRegistryClient, DEFAULT_TIMEOUT
 from image.descriptor           import ContainerImageDescriptor
 from image.manifest             import ContainerImageManifest
 from image.manifestlistentry    import ContainerImageManifestListEntry
@@ -69,7 +69,8 @@ class ContainerImageManifestList:
             name: str,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> List[
             ContainerImageManifest
         ]:
@@ -81,6 +82,7 @@ class ContainerImageManifestList:
             auth (Dict[str, Any]): A valid docker config JSON dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             List[ContainerImageManifest]: The arch manifests
@@ -100,7 +102,7 @@ class ContainerImageManifestList:
 
             # Get the arch image's manifest from the registry, append to list
             manifest_dict = ContainerImageRegistryClient.get_manifest(
-                ref, auth, skip_verify=skip_verify, http=http
+                ref, auth, skip_verify=skip_verify, http=http, timeout=timeout
             )
             manifest = ContainerImageManifest(manifest_dict)
             manifests.append(manifest)
@@ -113,7 +115,8 @@ class ContainerImageManifestList:
             name: str,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> List[
             ContainerImageDescriptor
         ]:
@@ -126,13 +129,14 @@ class ContainerImageManifestList:
             auth (Dict[str, Any]): A valid docker config JSON dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             int: The list of layer descriptors across each of the manifests
         """
         layers = []
         manifests = self.get_manifests(
-            name, auth, skip_verify=skip_verify, http=http
+            name, auth, skip_verify=skip_verify, http=http, timeout=timeout
         )
         for manifest in manifests:
             layers.extend(
@@ -145,7 +149,8 @@ class ContainerImageManifestList:
             name: str,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> List[
             ContainerImageDescriptor
         ]:
@@ -158,13 +163,14 @@ class ContainerImageManifestList:
             auth (Dict[str, Any]): A valid docker config JSON dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             List[ContainerImageDescriptor]: The list of config descriptors across each of the manifests
         """
         configs = []
         manifests = self.get_manifests(
-            name, auth, skip_verify=skip_verify, http=http
+            name, auth, skip_verify=skip_verify, http=http, timeout=timeout
         )
         for manifest in manifests:
             configs.append(manifest.get_config_descriptor())
@@ -184,7 +190,8 @@ class ContainerImageManifestList:
             name: str,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> int:
         """
         Calculates the size of the image using the distribution registry API
@@ -194,6 +201,7 @@ class ContainerImageManifestList:
             auth (Dict[str, Any]): A valid docker config JSON dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             int: The size of the manifest list in bytes
@@ -218,7 +226,7 @@ class ContainerImageManifestList:
 
             # Get the arch image's manifest from the registry
             manifest_dict = ContainerImageRegistryClient.get_manifest(
-                ref, auth, skip_verify=skip_verify, http=http
+                ref, auth, skip_verify=skip_verify, http=http, timeout=timeout
             )
             manifest = ContainerImageManifest(manifest_dict)
 

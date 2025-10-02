@@ -14,7 +14,8 @@ from typing                         import  List, Dict, Any, \
                                             Union, Type, Iterator
 from image.byteunit                 import  ByteUnit
 from image.client                   import  ContainerImageRegistryClient, \
-                                            DEFAULT_CHUNK_SIZE
+                                            DEFAULT_CHUNK_SIZE, \
+                                            DEFAULT_TIMEOUT
 from image.config                   import  ContainerImageConfig
 from image.containerimageinspect    import  ContainerImageInspect
 from image.descriptor               import  ContainerImageDescriptor
@@ -101,7 +102,8 @@ class ContainerImage(ContainerImageReference):
             ],
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> Union[
             ContainerImageManifestV2S2,
             ContainerImageManifestOCI
@@ -117,6 +119,7 @@ class ContainerImage(ContainerImageReference):
             auth (Dict[str, Any]): A valid docker config JSON with auth into the ref's registry
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         
         Returns:
             Union[ContainerImageManifestV2S2,ContainerImageManifestOCI]: The manifest response from the registry API
@@ -147,7 +150,8 @@ class ContainerImage(ContainerImageReference):
             host_manifest = host_ref.get_manifest(
                 auth=auth,
                 skip_verify=skip_verify,
-                http=http
+                http=http,
+                timeout=timeout
             )
         
         # Return the manifest matching the host platform
@@ -164,7 +168,8 @@ class ContainerImage(ContainerImageReference):
             ],
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> ContainerImageConfig:
         """
         Given an image's manifest, this static method fetches that image's
@@ -178,6 +183,7 @@ class ContainerImage(ContainerImageReference):
             auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         
         Returns:
             ContainerImageConfig: The config for this image
@@ -187,7 +193,12 @@ class ContainerImage(ContainerImageReference):
         """
         # If manifest list, get the manifest matching the host platform
         manifest = ContainerImage.get_host_platform_manifest_static(
-            ref, manifest, auth, skip_verify=skip_verify, http=http
+            ref,
+            manifest,
+            auth,
+            skip_verify=skip_verify,
+            http=http,
+            timeout=timeout
         )
         
         # Get the image's config
@@ -197,7 +208,8 @@ class ContainerImage(ContainerImageReference):
                 manifest.get_config_descriptor(),
                 auth=auth,
                 skip_verify=skip_verify,
-                http=http
+                http=http,
+                timeout=timeout
             )
         )
 
@@ -229,7 +241,8 @@ class ContainerImage(ContainerImageReference):
             self,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> str:
         """
         Parses the digest from the reference if digest reference, or fetches
@@ -239,6 +252,7 @@ class ContainerImage(ContainerImageReference):
             auth (Dict[str, Any]): A valid docker config JSON
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             str: The image digest
@@ -249,14 +263,16 @@ class ContainerImage(ContainerImageReference):
             self,
             auth,
             skip_verify=skip_verify,
-            http=http
+            http=http,
+            timeout=timeout
         )
     
     def get_platforms(
             self,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> List[
             ContainerImagePlatform
         ]:
@@ -268,12 +284,18 @@ class ContainerImage(ContainerImageReference):
             auth (Dict[str, Any]): A valid docker config JSON
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             List[ContainerImagePlatform]: The supported platforms
         """
         # If manifest, get the config and get its platform
-        manifest = self.get_manifest(auth)
+        manifest = self.get_manifest(
+            auth,
+            skip_verify=skip_verify,
+            http=http,
+            timeout=timeout
+        )
         platforms = []
         if not ContainerImage.is_manifest_list_static(manifest):
             config_desc = manifest.get_config_descriptor()
@@ -282,7 +304,8 @@ class ContainerImage(ContainerImageReference):
                 config_desc,
                 auth,
                 skip_verify=skip_verify,
-                http=http
+                http=http,
+                timeout=timeout
             )
             config = ContainerImageConfig(config_dict)
             platforms = [ config.get_platform() ]
@@ -295,7 +318,8 @@ class ContainerImage(ContainerImageReference):
             self,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> Union[
             ContainerImageManifestV2S2,
             ContainerImageManifestListV2S2,
@@ -321,7 +345,7 @@ class ContainerImage(ContainerImageReference):
         # Use the container image registry client to get the manifest
         return ContainerImageManifestFactory.create(
             ContainerImageRegistryClient.get_manifest(
-                self, auth, skip_verify=skip_verify, http=http
+                self, auth, skip_verify=skip_verify, http=http, timeout=timeout
             )
         )
     
@@ -329,7 +353,8 @@ class ContainerImage(ContainerImageReference):
             self,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> Union[
             ContainerImageManifestOCI,
             ContainerImageManifestV2S2
@@ -344,6 +369,7 @@ class ContainerImage(ContainerImageReference):
             auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         
         Returns:
             Union[ContainerImageManifestV2S2,ContainerImageManifestOCI]: The manifest response from the registry API
@@ -355,7 +381,8 @@ class ContainerImage(ContainerImageReference):
         manifest = self.get_manifest(
             auth=auth,
             skip_verify=skip_verify,
-            http=http
+            http=http,
+            timeout=timeout
         )
         
         # Return the host platform manifest
@@ -364,14 +391,16 @@ class ContainerImage(ContainerImageReference):
             manifest,
             auth,
             skip_verify=skip_verify,
-            http=http
+            http=http,
+            timeout=timeout
         )
 
     def get_config(
             self,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> ContainerImageConfig:
         """
         Fetches the image's config from the distribution registry API.  If the
@@ -382,6 +411,7 @@ class ContainerImage(ContainerImageReference):
             auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         
         Returns:
             ContainerImageConfig: The config for this image
@@ -393,12 +423,18 @@ class ContainerImage(ContainerImageReference):
         manifest = self.get_manifest(
             auth=auth,
             skip_verify=skip_verify,
-            http=http
+            http=http,
+            timeout=timeout
         )
 
         # Use the image's manifest to get the image's config
         config = ContainerImage.get_config_static(
-            self, manifest, auth, skip_verify=skip_verify, http=http
+            self,
+            manifest,
+            auth,
+            skip_verify=skip_verify,
+            http=http,
+            timeout=timeout
         )
 
         # Return the image's config
@@ -408,7 +444,8 @@ class ContainerImage(ContainerImageReference):
             self,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> Dict[str, Any]:
         """
         Fetches the list of tags for the image from the distribution registry
@@ -423,14 +460,15 @@ class ContainerImage(ContainerImageReference):
             Dict[str, Any]: The tag list loaded into a dict
         """
         return ContainerImageRegistryClient.list_tags(
-            self, auth, skip_verify=skip_verify, http=http
+            self, auth, skip_verify=skip_verify, http=http, timeout=timeout
         )
 
     def exists(
             self,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> bool:
         """
         Determine if the image reference corresponds to an image in the remote
@@ -440,13 +478,14 @@ class ContainerImage(ContainerImageReference):
             auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         
         Returns:
             bool: Whether the image exists in the registry
         """
         try:
             ContainerImageRegistryClient.get_manifest(
-                self, auth, skip_verify=skip_verify, http=http
+                self, auth, skip_verify=skip_verify, http=http, timeout=timeout
             )
         except requests.HTTPError as he:
             if he.response.status_code == 404:
@@ -459,7 +498,8 @@ class ContainerImage(ContainerImageReference):
             self,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> bool:
         """
         Determine if the image is a manifest list
@@ -468,19 +508,26 @@ class ContainerImage(ContainerImageReference):
             auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             bool: Whether the image is a manifest list or single-arch
         """
         return ContainerImage.is_manifest_list_static(
-            self.get_manifest(auth, skip_verify=skip_verify, http=http)
+            self.get_manifest(
+                auth,
+                skip_verify=skip_verify,
+                http=http,
+                timeout=timeout
+            )
         )
 
     def is_oci(
             self,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> bool:
         """
         Determine if the image is in the OCI format
@@ -489,19 +536,26 @@ class ContainerImage(ContainerImageReference):
             auth (Dict[str, Any]): A valid docker config JSON with auth into this image's registry
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         
         Returns:
             bool: Whether the image is in the OCI format
         """
         return ContainerImage.is_oci_static(
-            self.get_manifest(auth, skip_verify=skip_verify, http=http)
+            self.get_manifest(
+                auth,
+                skip_verify=skip_verify,
+                http=http,
+                timeout=timeout
+            )
         )
 
     def get_media_type(
             self,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> str:
         """
         Gets the image's mediaType from its manifest
@@ -510,19 +564,21 @@ class ContainerImage(ContainerImageReference):
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             str: The image's mediaType
         """
         return self.get_manifest(
-            auth, skip_verify=skip_verify, http=http
+            auth, skip_verify=skip_verify, http=http, timeout=timeout
         ).get_media_type()
 
     def get_size(
             self,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> int:
         """
         Calculates the size of the image by fetching its manifest metadata
@@ -532,18 +588,25 @@ class ContainerImage(ContainerImageReference):
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             int: The size of the image in bytes
         """
         # Get the manifest and calculate its size
-        manifest = self.get_manifest(auth, skip_verify=skip_verify, http=http)
+        manifest = self.get_manifest(
+            auth,
+            skip_verify=skip_verify,
+            http=http,
+            timeout=timeout
+        )
         if ContainerImage.is_manifest_list_static(manifest):
             return manifest.get_size(
                 self.get_name(),
                 auth,
                 skip_verify=skip_verify,
-                http=http
+                http=http,
+                timeout=timeout
             )
         else:
             return manifest.get_size()
@@ -552,7 +615,8 @@ class ContainerImage(ContainerImageReference):
             self,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> str:
         """
         Calculates the size of the image by fetching its manifest metadata
@@ -566,14 +630,20 @@ class ContainerImage(ContainerImageReference):
             str: The size of the image in bytes in human readable format (1.25 GB)
         """
         return ByteUnit.format_size_bytes(
-            self.get_size(auth, skip_verify=skip_verify, http=http)
+            self.get_size(
+                auth,
+                skip_verify=skip_verify,
+                http=http,
+                timeout=timeout
+            )
         )
     
     def inspect(
             self,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> ContainerImageInspect:
         """
         Returns a collection of basic information about the image, equivalent
@@ -583,6 +653,7 @@ class ContainerImage(ContainerImageReference):
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         
         Returns:
             ContainerImageInspect: A collection of information about the image
@@ -591,26 +662,33 @@ class ContainerImage(ContainerImageReference):
         manifest = self.get_host_platform_manifest(
             auth=auth,
             skip_verify=skip_verify,
-            http=http
+            http=http,
+            timeout=timeout
         )
 
         # Use the image's manifest to get the image's config
         config = ContainerImage.get_config_static(
-            self, manifest, auth, skip_verify=skip_verify, http=http
+            self,
+            manifest,
+            auth,
+            skip_verify=skip_verify,
+            http=http,
+            timeout=timeout
         )
 
         # List the image's tags
         tags = self.list_tags(
             auth,
             skip_verify=skip_verify,
-            http=http
+            http=http,
+            timeout=timeout
         )
 
         # Format the inspect dictionary
         inspect = {
             "Name": self.get_name(),
             "Digest": self.get_digest(
-                auth=auth, skip_verify=skip_verify, http=http
+                auth=auth, skip_verify=skip_verify, http=http, timeout=timeout
             ),
             "RepoTags": tags["tags"],
             # TODO: Implement v2s1 manifest extension - only v2s1 manifests use this value
@@ -650,7 +728,8 @@ class ContainerImage(ContainerImageReference):
             path: str,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ):
         """
         Downloads the image onto the filesystem
@@ -660,10 +739,11 @@ class ContainerImage(ContainerImageReference):
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         """
         # Get the source manifest or manifests
         manifest = self.get_manifest(
-            auth=auth, skip_verify=skip_verify, http=http
+            auth=auth, skip_verify=skip_verify, http=http, timeout=timeout
         )
         if ContainerImage.is_manifest_list_static(manifest):
             for entry in manifest.get_entries():
@@ -674,7 +754,7 @@ class ContainerImage(ContainerImageReference):
 
                 # Download each manifest and save as <digest>.manifest.json
                 arch_manifest = manifest_img.get_manifest(
-                    auth, skip_verify=skip_verify, http=http
+                    auth, skip_verify=skip_verify, http=http, timeout=timeout
                 )
                 with open(
                         f"{path}/{entry.get_digest().split(':')[-1]}.manifest.json", 'w'
@@ -689,7 +769,8 @@ class ContainerImage(ContainerImageReference):
                         desc,
                         auth,
                         skip_verify=skip_verify,
-                        http=http
+                        http=http,
+                        timeout=timeout
                     )
                     with open(
                             f"{path}/{desc.get_digest().split(':')[-1]}", 'wb'
@@ -704,7 +785,8 @@ class ContainerImage(ContainerImageReference):
                     desc,
                     auth,
                     skip_verify=skip_verify,
-                    http=http
+                    http=http,
+                    timeout=timeout
                 )
                 with open(
                         f"{path}/{desc.get_digest().split(':')[-1]}", 'wb'
@@ -725,7 +807,8 @@ class ContainerImage(ContainerImageReference):
             src_skip_verify: bool=False,
             dest_skip_verify: bool=False,
             src_http: bool=False,
-            dest_http: bool=False
+            dest_http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ):
         """
         Copies a blob to a new registry
@@ -739,6 +822,7 @@ class ContainerImage(ContainerImageReference):
             dest_skip_verify (bool): Insecure, skip TLS cert verification for the destination reference
             src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
             dest_http (bool): Insecure, whether to use HTTP (not HTTPs) for the destination reference
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         """
         # Exit early if the blob exists in the destination registry
         if ContainerImageRegistryClient.blob_exists(
@@ -746,7 +830,8 @@ class ContainerImage(ContainerImageReference):
                 desc,
                 auth,
                 skip_verify=dest_skip_verify,
-                http=dest_http
+                http=dest_http,
+                timeout=timeout
             ):
             return
         
@@ -757,13 +842,15 @@ class ContainerImage(ContainerImageReference):
                 desc,
                 auth,
                 skip_verify=src_skip_verify,
-                http=src_http
+                http=src_http,
+                timeout=timeout
             )
             upload_url = ContainerImageRegistryClient.initialize_upload(
                 dest,
                 auth,
                 skip_verify=dest_skip_verify,
-                http=dest_http
+                http=dest_http,
+                timeout=timeout
             )
             ContainerImageRegistryClient.upload_blob(
                 dest,
@@ -773,7 +860,8 @@ class ContainerImage(ContainerImageReference):
                 chunked=False,
                 auth=auth,
                 skip_verify=dest_skip_verify,
-                http=dest_http
+                http=dest_http,
+                timeout=timeout
             )
             return
         
@@ -786,7 +874,8 @@ class ContainerImage(ContainerImageReference):
             auth,
             skip_verify=src_skip_verify,
             stream=True,
-            http=src_http
+            http=src_http,
+            timeout=timeout
         )
         for chunk in res.iter_content(chunk_size=chunk_size):
             # Initialize a blob upload for the blob
@@ -795,7 +884,8 @@ class ContainerImage(ContainerImageReference):
                     dest,
                     auth,
                     skip_verify=dest_skip_verify,
-                    http=dest_http
+                    http=dest_http,
+                    timeout=timeout
                 )
             
             # Upload the chunk
@@ -809,7 +899,8 @@ class ContainerImage(ContainerImageReference):
                 chunk_start=chunk_start,
                 last_chunk=is_last_chunk,
                 auth=auth,
-                skip_verify=dest_skip_verify
+                skip_verify=dest_skip_verify,
+                timeout=timeout
             )
             if next_upload_url is not None:
                 blob_upload_url = next_upload_url
@@ -828,7 +919,8 @@ class ContainerImage(ContainerImageReference):
             src_skip_verify: bool=False,
             dest_skip_verify: bool=False,
             src_http: bool=False,
-            dest_http: bool=False
+            dest_http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ):
         """
         Copies a collection of blobs to a new registry in parallel
@@ -843,6 +935,7 @@ class ContainerImage(ContainerImageReference):
             dest_skip_verify (bool): Insecure, skip TLS cert verification for the destination reference
             src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
             dest_http (bool): Insecure, whether to use HTTP (not HTTPs) for the destination reference
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         """
         coroutines = []
         for desc in descriptors:
@@ -856,7 +949,8 @@ class ContainerImage(ContainerImageReference):
                 src_skip_verify=src_skip_verify,
                 dest_skip_verify=dest_skip_verify,
                 src_http=src_http,
-                dest_http=dest_http
+                dest_http=dest_http,
+                timeout=timeout
             )
             coroutines.append(coroutine)
         await asyncio.gather(*coroutines)
@@ -871,7 +965,8 @@ class ContainerImage(ContainerImageReference):
             src_skip_verify: bool=False,
             dest_skip_verify: bool=False,
             src_http: bool=False,
-            dest_http: bool=False
+            dest_http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ):
         """
         Copies a collection of blobs to a new registry sequentially
@@ -886,6 +981,7 @@ class ContainerImage(ContainerImageReference):
             dest_skip_verify (bool): Insecure, skip TLS cert verification for the destination reference
             src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
             dest_http (bool): Insecure, whether to use HTTP (not HTTPs) for the destination reference
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         """
         for desc in descriptors:
             self.copy_blob(
@@ -897,7 +993,8 @@ class ContainerImage(ContainerImageReference):
                 src_skip_verify=src_skip_verify,
                 dest_skip_verify=dest_skip_verify,
                 src_http=src_http,
-                dest_http=dest_http
+                dest_http=dest_http,
+                timeout=timeout
             )
 
     def copy_manifest(
@@ -911,7 +1008,8 @@ class ContainerImage(ContainerImageReference):
             src_skip_verify: bool=False,
             dest_skip_verify: bool=False,
             src_http: bool=False,
-            dest_http: bool=False
+            dest_http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ):
         """
         Copies an architecture manifest to a new registry
@@ -927,13 +1025,15 @@ class ContainerImage(ContainerImageReference):
             dest_skip_verify (bool): Insecure, skip TLS cert verification for the destination reference
             src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
             dest_http (bool): Insecure, whether to use HTTP (not HTTPs) for the destination reference
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         """
         if manifest is None:
             # Download the architecture manifest
             manifest = self.get_manifest(
                 auth,
                 skip_verify=src_skip_verify,
-                http=src_http
+                http=src_http,
+                timeout=timeout
             )
 
         # Ensure this is a single-arch manifest
@@ -957,7 +1057,8 @@ class ContainerImage(ContainerImageReference):
                     src_skip_verify=src_skip_verify,
                     dest_skip_verify=dest_skip_verify,
                     src_http=src_http,
-                    dest_http=dest_http
+                    dest_http=dest_http,
+                    timeout=timeout
                 )
             )
         else:
@@ -970,7 +1071,8 @@ class ContainerImage(ContainerImageReference):
                 src_skip_verify=src_skip_verify,
                 dest_skip_verify=dest_skip_verify,
                 src_http=src_http,
-                dest_http=dest_http
+                dest_http=dest_http,
+                timeout=timeout
             )
 
         # Upload each manifest
@@ -980,7 +1082,8 @@ class ContainerImage(ContainerImageReference):
             manifest.get_media_type(),
             auth,
             skip_verify=dest_skip_verify,
-            http=dest_http
+            http=dest_http,
+            timeout=timeout
         )
 
     async def _copy_manifests_parallel(
@@ -993,9 +1096,23 @@ class ContainerImage(ContainerImageReference):
             src_skip_verify: bool=False,
             dest_skip_verify: bool=False,
             src_http: bool=False,
-            dest_http: bool=False
+            dest_http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ):
         """
+        Copies a manifest list's manifests in parallel using asyncio
+
+        Args:
+            dest (Union[str, ContainerImageReference]): The destination location to copy the image
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            manifest_list (Union[ContainerImageManifestList, None]): Optionally pass in the manifest list up-front
+            chunked (bool): Whether to upload blobs in chunks or monolithically
+            chunk_size (int): The chunk size to use for chunked blob uploads, measured in bytes
+            src_skip_verify (bool): Insecure, skip TLS cert verification for the source reference
+            dest_skip_verify (bool): Insecure, skip TLS cert verification for the destination reference
+            src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
+            dest_http (bool): Insecure, whether to use HTTP (not HTTPs) for the destination reference
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         """
         coroutines = []
         for entry in manifest_list.get_entries():
@@ -1008,7 +1125,8 @@ class ContainerImage(ContainerImageReference):
             if manifest_dest.exists(
                 auth=auth,
                 skip_verify=dest_skip_verify,
-                http=dest_http
+                http=dest_http,
+                timeout=timeout
             ):
                 continue
             coroutine = asyncio.to_thread(
@@ -1022,7 +1140,8 @@ class ContainerImage(ContainerImageReference):
                 src_skip_verify=src_skip_verify,
                 dest_skip_verify=dest_skip_verify,
                 src_http=src_http,
-                dest_http=dest_http
+                dest_http=dest_http,
+                timeout=timeout
             )
             coroutines.append(coroutine)
         await asyncio.gather(*coroutines)
@@ -1037,9 +1156,23 @@ class ContainerImage(ContainerImageReference):
             src_skip_verify: bool=False,
             dest_skip_verify: bool=False,
             src_http: bool=False,
-            dest_http: bool=False
+            dest_http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ):
         """
+        Copies a manifest list's manifests sequentially
+
+        Args:
+            dest (Union[str, ContainerImageReference]): The destination location to copy the image
+            auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
+            manifest_list (Union[ContainerImageManifestList, None]): Optionally pass in the manifest list up-front
+            chunked (bool): Whether to upload blobs in chunks or monolithically
+            chunk_size (int): The chunk size to use for chunked blob uploads, measured in bytes
+            src_skip_verify (bool): Insecure, skip TLS cert verification for the source reference
+            dest_skip_verify (bool): Insecure, skip TLS cert verification for the destination reference
+            src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
+            dest_http (bool): Insecure, whether to use HTTP (not HTTPs) for the destination reference
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         """
         for entry in manifest_list.get_entries():
             # Create a new ContainerImage for each manifest
@@ -1052,7 +1185,8 @@ class ContainerImage(ContainerImageReference):
             if manifest_dest.exists(
                 auth=auth,
                 skip_verify=dest_skip_verify,
-                http=dest_http
+                http=dest_http,
+                timeout=timeout
             ):
                 continue
 
@@ -1067,7 +1201,8 @@ class ContainerImage(ContainerImageReference):
                 src_skip_verify=src_skip_verify,
                 dest_skip_verify=dest_skip_verify,
                 src_http=src_http,
-                dest_http=dest_http
+                dest_http=dest_http,
+                timeout=timeout
             )
 
     def copy_manifest_list(
@@ -1081,7 +1216,8 @@ class ContainerImage(ContainerImageReference):
             src_skip_verify: bool=False,
             dest_skip_verify: bool=False,
             src_http: bool=False,
-            dest_http: bool=False
+            dest_http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ):
         """
         Copies a manifest list to a new registry
@@ -1097,13 +1233,15 @@ class ContainerImage(ContainerImageReference):
             dest_skip_verify (bool): Insecure, skip TLS cert verification for the destination reference
             src_http (bool): Insecure, whether to use HTTP (not HTTPs) for the source reference
             dest_http (bool): Insecure, whether to use HTTP (not HTTPs) for the destination reference
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         """
         if manifest_list is None:
             # Download the manifest list
             manifest_list = self.get_manifest(
                 auth,
                 skip_verify=src_skip_verify,
-                http=src_http
+                http=src_http,
+                timeout=timeout
             )
 
         # Ensure this is a manifest list
@@ -1124,7 +1262,8 @@ class ContainerImage(ContainerImageReference):
                     src_skip_verify=src_skip_verify,
                     dest_skip_verify=dest_skip_verify,
                     src_http=src_http,
-                    dest_http=dest_http
+                    dest_http=dest_http,
+                    timeout=timeout
                 )
             )
         else:
@@ -1137,7 +1276,8 @@ class ContainerImage(ContainerImageReference):
                 src_skip_verify=src_skip_verify,
                 dest_skip_verify=dest_skip_verify,
                 src_http=src_http,
-                dest_http=dest_http
+                dest_http=dest_http,
+                timeout=timeout
             )
         
         # Upload the top-level manifest list
@@ -1147,7 +1287,8 @@ class ContainerImage(ContainerImageReference):
             manifest_list.get_media_type(),
             auth,
             skip_verify=dest_skip_verify,
-            http=dest_http
+            http=dest_http,
+            timeout=timeout
         )
 
     def copy(
@@ -1160,7 +1301,8 @@ class ContainerImage(ContainerImageReference):
             src_skip_verify: bool=False,
             dest_skip_verify: bool=False,
             src_http: bool=False,
-            dest_http: bool=False
+            dest_http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ):
         """
         Copies the image to a new registry
@@ -1188,7 +1330,8 @@ class ContainerImage(ContainerImageReference):
         manifest = self.get_manifest(
             auth=auth,
             skip_verify=src_skip_verify,
-            http=src_http
+            http=src_http,
+            timeout=timeout
         )
         if ContainerImage.is_manifest_list_static(manifest):
             self.copy_manifest_list(
@@ -1201,7 +1344,8 @@ class ContainerImage(ContainerImageReference):
                 src_skip_verify=src_skip_verify,
                 dest_skip_verify=dest_skip_verify,
                 src_http=src_http,
-                dest_http=dest_http
+                dest_http=dest_http,
+                timeout=timeout
             )
         else:
             self.copy_manifest(
@@ -1214,14 +1358,16 @@ class ContainerImage(ContainerImageReference):
                 src_skip_verify=src_skip_verify,
                 dest_skip_verify=dest_skip_verify,
                 src_http=src_http,
-                dest_http=dest_http
+                dest_http=dest_http,
+                timeout=timeout
             )
 
     def delete(
             self,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ):
         """
         Deletes the image from the registry.
@@ -1230,13 +1376,14 @@ class ContainerImage(ContainerImageReference):
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         """
         # Ensure the ref is valid, if not raise an exception
         valid, err = self.validate()
         if not valid:
             raise ContainerImageError(err)
         ContainerImageRegistryClient.delete(
-            self, auth, skip_verify=skip_verify, http=http
+            self, auth, skip_verify=skip_verify, http=http, timeout=timeout
         )
 
 class ContainerImageList:
@@ -1281,7 +1428,8 @@ class ContainerImageList:
             self,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> int:
         """
         Get the deduplicated size of all container images in the list
@@ -1290,6 +1438,7 @@ class ContainerImageList:
             auth (Dict[str, Any]): A valid docker config JSON dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             int: The deduplicated size of all container images in the list
@@ -1303,7 +1452,7 @@ class ContainerImageList:
         for image in self.images:
             # Get the image's manifest
             manifest = image.get_manifest(
-                auth, skip_verify=skip_verify, http=http
+                auth, skip_verify=skip_verify, http=http, timeout=timeout
             )
 
             # If a manifest list, get its configs, entry sizes, layers
@@ -1312,10 +1461,18 @@ class ContainerImageList:
             if ContainerImage.is_manifest_list_static(manifest):
                 entry_sizes += manifest.get_entry_sizes()
                 image_layers = manifest.get_layer_descriptors(
-                    image.get_name(), auth, skip_verify=skip_verify, http=http
+                    image.get_name(),
+                    auth,
+                    skip_verify=skip_verify,
+                    http=http,
+                    timeout=timeout
                 )
                 image_configs = manifest.get_config_descriptors(
-                    image.get_name(), auth, skip_verify=skip_verify, http=http
+                    image.get_name(),
+                    auth,
+                    skip_verify=skip_verify,
+                    http=http,
+                    timeout=timeout
                 )
             # If an arch manifest, get its config, layers
             else:
@@ -1347,7 +1504,8 @@ class ContainerImageList:
             self,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> str:
         """
         Get the deduplicated size of all container images in the list,
@@ -1357,19 +1515,26 @@ class ContainerImageList:
             auth (Dict[str, Any]): A valid docker config JSON dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             str: List size in bytes formatted to nearest unit (ex. "1.23 MB")
         """
         return ByteUnit.format_size_bytes(
-            self.get_size(auth, skip_verify=skip_verify, http=http)
+            self.get_size(
+                auth,
+                skip_verify=skip_verify,
+                http=http,
+                timeout=timeout
+            )
         )
     
     def delete(
             self,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ):
         """
         Delete all of the container images in the list from the registry
@@ -1378,9 +1543,15 @@ class ContainerImageList:
             auth (Dict[str, Any]): A valid docker config JSON dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         """
         for image in self.images:
-            image.delete(auth, skip_verify=skip_verify, http=http)
+            image.delete(
+                auth,
+                skip_verify=skip_verify,
+                http=http,
+                timeout=timeout
+            )
 
     def diff(self, previous: Type[ContainerImageList]) -> Type[ContainerImageListDiff]:
         """
