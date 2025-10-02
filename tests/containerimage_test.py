@@ -171,6 +171,35 @@ def test_container_image_is_tag_ref():
     assert exc != None
     assert isinstance(exc, ContainerImageError)
 
+def test_container_image_get_tag():
+    # Ensure we can get a tag for a tag ref
+    image = ContainerImage("this.is/a/valid/image:v1.2.3")
+    tag = image.get_tag()
+    assert tag == "v1.2.3"
+
+    # Ensure we get None for a digest-only ref
+    digest = "sha256:f5d2c6a1e0c86e4234ea601552dbabb4ced0e013a1efcbfb439f1f6a7a9275b0"
+    image = ContainerImage(
+        "this.is/a/valid/image@" + \
+        digest
+    )
+    tag = image.get_tag()
+    assert tag is None
+
+    # Ensure we can get a tag for a tag and digest ref
+    image = ContainerImage(
+        "this.is/a/valid/image:" + \
+        "v1.2.3@" + \
+        digest
+    )
+    tag = image.get_tag()
+    assert tag == "v1.2.3"
+
+    # Ensure we get latest for an image name
+    image = ContainerImage("this.is/a/valid/image")
+    tag = image.get_tag()
+    assert tag == "latest"
+
 def test_container_image_get_identifier():
     # Ensure identifier matches for tag ref
     image = ContainerImage("this.is/a/valid/image:v1.2.3")
