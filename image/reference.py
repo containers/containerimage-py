@@ -110,9 +110,9 @@ class ContainerImageReference:
         if self.is_digest_ref():
             try:
                 maybe_tag_ref = ContainerImageReference(self.ref.split("@")[0])
-                if bool(re.match(ANCHORED_NAME, maybe_tag_ref.ref)):
-                    return None
-                return maybe_tag_ref.get_identifier()
+                if ":" in maybe_tag_ref.ref:
+                    return maybe_tag_ref.get_identifier()
+                return None
             except ContainerImageError:
                 return None
         
