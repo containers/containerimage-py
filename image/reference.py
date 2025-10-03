@@ -10,7 +10,7 @@ from image.regex    import  REFERENCE_PAT, \
                             ANCHORED_TAG, \
                             ANCHORED_NAME, \
                             ANCHORED_DOMAIN
-from typing         import  Tuple, Dict, Any
+from typing         import  Tuple, Dict, Any, Union
 
 class ContainerImageReference:
     """
@@ -93,11 +93,31 @@ class ContainerImageReference:
         if self.is_digest_ref():
             return False
 
-        # Parse out the tag and validate it, if valdi then it is a tag ref
+        # Parse out the tag and validate it, if valid then it is a tag ref
         tag = "latest"
         if ":" in self.ref:
             tag = self.ref.split(":")[-1]
         return bool(re.match(ANCHORED_TAG, tag))
+
+    def get_tag(self) -> Union[str, None]:
+        """
+        Returns the image tag if found in the reference, otherwise returns None
+
+        Returns:
+            str | None: The image tag, or None if not given
+        """
+        # Check if tag and digest ref
+        if self.is_digest_ref():
+            try:
+                maybe_tag_ref = ContainerImageReference(self.ref.split("@")[0])
+                if ":" in maybe_tag_ref.ref:
+                    return maybe_tag_ref.get_identifier()
+                return None
+            except ContainerImageError:
+                return None
+        
+        # Tag ref - we can just return the identifier
+        return self.get_identifier()
 
     def get_identifier(self) -> str:
         """

@@ -37,6 +37,11 @@ DEFAULT_CHUNK_SIZE = 1024 * 1024 * 16
 The default chunk size for chunked blob uploads, 16 MB
 """
 
+DEFAULT_TIMEOUT = 10
+"""
+The default read / connect timeout for requests against the registry
+"""
+
 class ContainerImageRegistryClient:
     """
     A CNCF distribution registry API client
@@ -153,7 +158,8 @@ class ContainerImageRegistryClient:
     def get_auth_token(
             res: requests.Response,
             reg_auth: str,
-            skip_verify: bool=False
+            skip_verify: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> Tuple[str, str]:
         """
         The response from the distribution registry API, which MUST be a 401
@@ -163,6 +169,7 @@ class ContainerImageRegistryClient:
             res (requests.Response): The response from the registry API
             reg_auth (str): The auth retrieved for the registry
             skip_verify (bool): Insecure, skip TLS cert verification
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             str: The auth scheme for the token
@@ -206,7 +213,8 @@ class ContainerImageRegistryClient:
         token_res = requests.get(
             auth_url,
             headers=headers,
-            verify=not skip_verify
+            verify=not skip_verify,
+            timeout=timeout
         )
         token_res.raise_for_status()
         token_json = token_res.json()
@@ -220,7 +228,8 @@ class ContainerImageRegistryClient:
             auth: Dict[str, Any]={},
             skip_verify: bool=False,
             stream: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> requests.Response:
         """
         Fetches a blob from the registry API and returns as a requests response
@@ -232,6 +241,7 @@ class ContainerImageRegistryClient:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             requests.Response: The registry API blob response
@@ -266,21 +276,23 @@ class ContainerImageRegistryClient:
             api_url,
             headers=headers,
             verify=not skip_verify,
-            stream=stream
+            stream=stream,
+            timeout=timeout
         )
         if res.status_code == 401 and \
             'www-authenticate' in res.headers.keys():
             # Do Oauth dance if basic auth fails
             # Ref: https://distribution.github.io/distribution/spec/auth/token/
             scheme, token = ContainerImageRegistryClient.get_auth_token(
-                res, reg_auth, skip_verify=skip_verify
+                res, reg_auth, skip_verify=skip_verify, timeout=timeout
             )
             headers['Authorization'] = f'{scheme} {token}'
             res = requests.get(
                 api_url,
                 headers=headers,
                 verify=not skip_verify,
-                stream=stream
+                stream=stream,
+                timeout=timeout
             )
 
         # Raise exceptions on error status codes
@@ -293,7 +305,8 @@ class ContainerImageRegistryClient:
             desc: ContainerImageDescriptor,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> bytes:
         """
         Fetches a blob from the registry API and returns as bytes
@@ -304,6 +317,7 @@ class ContainerImageRegistryClient:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             bytes: The blob as bytes
@@ -315,7 +329,12 @@ class ContainerImageRegistryClient:
 
         # Query the blob and capture the response
         res = ContainerImageRegistryClient.query_blob(
-            ref, desc, auth, skip_verify=skip_verify, http=http
+            ref,
+            desc,
+            auth,
+            skip_verify=skip_verify,
+            http=http,
+            timeout=timeout
         )
 
         # Load the blob content and return
@@ -326,7 +345,8 @@ class ContainerImageRegistryClient:
             str_or_ref: Union[str, ContainerImageReference],
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> str:
         """
         Initializes a blob upload and returns the upload URL
@@ -336,6 +356,7 @@ class ContainerImageRegistryClient:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         
         Returns:
             str: The blob upload URL
@@ -368,20 +389,22 @@ class ContainerImageRegistryClient:
         res = requests.post(
             api_url,
             headers=headers,
-            verify=not skip_verify
+            verify=not skip_verify,
+            timeout=timeout
         )
         if res.status_code == 401 and \
             'www-authenticate' in res.headers.keys():
             # Do Oauth dance if basic auth fails
             # Ref: https://distribution.github.io/distribution/spec/auth/token/
             scheme, token = ContainerImageRegistryClient.get_auth_token(
-                res, reg_auth, skip_verify=skip_verify
+                res, reg_auth, skip_verify=skip_verify, timeout=timeout
             )
             headers['Authorization'] = f'{scheme} {token}'
             res = requests.post(
                 api_url,
                 headers=headers,
-                verify=not skip_verify
+                verify=not skip_verify,
+                timeout=timeout
             )
 
         # Extract the upload UUID from the request response
@@ -394,7 +417,8 @@ class ContainerImageRegistryClient:
             desc: ContainerImageDescriptor,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> bool:
         """
         Queries the registry API for whether a blob exists before uploading
@@ -405,6 +429,7 @@ class ContainerImageRegistryClient:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         
         Returns:
             bool: Whether the blob already exists in the registry
@@ -439,20 +464,22 @@ class ContainerImageRegistryClient:
         res = requests.head(
             api_url,
             headers=headers,
-            verify=not skip_verify
+            verify=not skip_verify,
+            timeout=timeout
         )
         if res.status_code == 401 and \
             'www-authenticate' in res.headers.keys():
             # Do Oauth dance if basic auth fails
             # Ref: https://distribution.github.io/distribution/spec/auth/token/
             scheme, token = ContainerImageRegistryClient.get_auth_token(
-                res, reg_auth, skip_verify=skip_verify
+                res, reg_auth, skip_verify=skip_verify, timeout=timeout
             )
             headers['Authorization'] = f'{scheme} {token}'
-            res = requests.post(
+            res = requests.head(
                 api_url,
                 headers=headers,
-                verify=not skip_verify
+                verify=not skip_verify,
+                timeout=timeout
             )
 
         # Return true if a 200 response is returned
@@ -468,7 +495,8 @@ class ContainerImageRegistryClient:
             chunk_start: int=0,
             last_chunk: bool=False,
             auth: Dict[str, Any]={},
-            skip_verify: bool=False
+            skip_verify: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> Union[str, None]:
         """
         Uploads a single blob chunk to the registry API
@@ -480,6 +508,7 @@ class ContainerImageRegistryClient:
             content (bytes): The chunk to upload
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         
         Returns:
             str | None: The next uplaod URL, or none if this is the last chunk
@@ -521,21 +550,23 @@ class ContainerImageRegistryClient:
                 fin_api_url,
                 headers=headers,
                 data=chunk,
-                verify=not skip_verify
+                verify=not skip_verify,
+                timeout=timeout
             )
             if res.status_code == 401 and \
                 'www-authenticate' in res.headers.keys():
                 # Do Oauth dance if basic auth fails
                 # Ref: https://distribution.github.io/distribution/spec/auth/token/
                 scheme, token = ContainerImageRegistryClient.get_auth_token(
-                    res, reg_auth, skip_verify=skip_verify
+                    res, reg_auth, skip_verify=skip_verify, timeout=timeout
                 )
                 headers['Authorization'] = f'{scheme} {token}'
                 res = requests.put(
                     fin_api_url,
                     headers=headers,
                     data=chunk,
-                    verify=not skip_verify
+                    verify=not skip_verify,
+                    timeout=timeout
                 )
             return None
         else:
@@ -543,21 +574,23 @@ class ContainerImageRegistryClient:
                 chunk_upload_url,
                 headers=headers,
                 data=chunk,
-                verify=not skip_verify
+                verify=not skip_verify,
+                timeout=timeout
             )
             if res.status_code == 401 and \
                 'www-authenticate' in res.headers.keys():
                 # Do Oauth dance if basic auth fails
                 # Ref: https://distribution.github.io/distribution/spec/auth/token/
                 scheme, token = ContainerImageRegistryClient.get_auth_token(
-                    res, reg_auth, skip_verify=skip_verify
+                    res, reg_auth, skip_verify=skip_verify, timeout=timeout
                 )
                 headers['Authorization'] = f'{scheme} {token}'
                 res = requests.patch(
                     chunk_upload_url,
                     headers=headers,
                     data=chunk,
-                    verify=not skip_verify
+                    verify=not skip_verify,
+                    timeout=timeout
                 )
             return res.headers.get("Location")
 
@@ -568,7 +601,8 @@ class ContainerImageRegistryClient:
             desc: ContainerImageDescriptor,
             content: bytes,
             auth: Dict[str, Any],
-            skip_verify: bool=False
+            skip_verify: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ):
         """
         Uploads a blob to the registry API underneath the given reference
@@ -581,6 +615,7 @@ class ContainerImageRegistryClient:
             content (bytes): The blob content to upload
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         """
         # If given a str, then load as a ref
         ref = str_or_ref
@@ -616,21 +651,23 @@ class ContainerImageRegistryClient:
             api_url,
             headers=headers,
             data=content,
-            verify=not skip_verify
+            verify=not skip_verify,
+            timeout=timeout
         )
         if res.status_code == 401 and \
             'www-authenticate' in res.headers.keys():
             # Do Oauth dance if basic auth fails
             # Ref: https://distribution.github.io/distribution/spec/auth/token/
             scheme, token = ContainerImageRegistryClient.get_auth_token(
-                res, reg_auth, skip_verify=skip_verify
+                res, reg_auth, skip_verify=skip_verify, timeout=timeout
             )
             headers['Authorization'] = f'{scheme} {token}'
             res = requests.post(
                 api_url,
                 headers=headers,
                 data=content,
-                verify=not skip_verify
+                verify=not skip_verify,
+                timeout=timeout
             )
         
         # Raise exceptions if any HTTP error response codes are returned
@@ -644,7 +681,8 @@ class ContainerImageRegistryClient:
             content: bytes,
             chunk_size: int=DEFAULT_CHUNK_SIZE,
             auth: Dict[str, Any]={},
-            skip_verify: bool=False
+            skip_verify: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ):
         """
         Uploads a blob to the registry API underneath the given reference
@@ -658,6 +696,7 @@ class ContainerImageRegistryClient:
             chunk_size (int): The size of the chunks to upload
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         """
         # If given a str, then load as a ref
         ref = str_or_ref
@@ -695,42 +734,46 @@ class ContainerImageRegistryClient:
                     fin_api_url,
                     headers=headers,
                     data=chunk,
-                    verify=not skip_verify
+                    verify=not skip_verify,
+                    timeout=timeout
                 )
                 if res.status_code == 401 and \
                     'www-authenticate' in res.headers.keys():
                     # Do Oauth dance if basic auth fails
                     # Ref: https://distribution.github.io/distribution/spec/auth/token/
                     scheme, token = ContainerImageRegistryClient.get_auth_token(
-                        res, reg_auth, skip_verify=skip_verify
+                        res, reg_auth, skip_verify=skip_verify, timeout=timeout
                     )
                     headers['Authorization'] = f'{scheme} {token}'
                     res = requests.put(
                         fin_api_url,
                         headers=headers,
                         data=chunk,
-                        verify=not skip_verify
+                        verify=not skip_verify,
+                        timeout=timeout
                     )
             else:
                 res = requests.patch(
                     chunk_upload_url,
                     headers=headers,
                     data=chunk,
-                    verify=not skip_verify
+                    verify=not skip_verify,
+                    timeout=timeout
                 )
                 if res.status_code == 401 and \
                     'www-authenticate' in res.headers.keys():
                     # Do Oauth dance if basic auth fails
                     # Ref: https://distribution.github.io/distribution/spec/auth/token/
                     scheme, token = ContainerImageRegistryClient.get_auth_token(
-                        res, reg_auth, skip_verify=skip_verify
+                        res, reg_auth, skip_verify=skip_verify, timeout=timeout
                     )
                     headers['Authorization'] = f'{scheme} {token}'
                     res = requests.patch(
                         chunk_upload_url,
                         headers=headers,
                         data=chunk,
-                        verify=not skip_verify
+                        verify=not skip_verify,
+                        timeout=timeout
                     )
                 chunk_upload_url = res.headers.get("Location")
             
@@ -747,7 +790,8 @@ class ContainerImageRegistryClient:
             chunk_size: int=DEFAULT_CHUNK_SIZE,
             auth: Dict[str, Any]={},
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ):
         """
         Uploads a blob to the registry API underneath the given reference
@@ -761,10 +805,16 @@ class ContainerImageRegistryClient:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         """
         # If the blob already exists, then no need to re-upload
         if ContainerImageRegistryClient.blob_exists(
-                str_or_ref, desc, auth, skip_verify=skip_verify, http=http
+                str_or_ref,
+                desc,
+                auth,
+                skip_verify=skip_verify,
+                http=http,
+                timeout=timeout
             ):
             return
         
@@ -777,7 +827,8 @@ class ContainerImageRegistryClient:
                 content,
                 chunk_size=chunk_size,
                 auth=auth,
-                skip_verify=skip_verify
+                skip_verify=skip_verify,
+                timeout=timeout
             )
         else:
             ContainerImageRegistryClient._upload_blob_monolithic(
@@ -786,7 +837,8 @@ class ContainerImageRegistryClient:
                 desc,
                 content,
                 auth,
-                skip_verify
+                skip_verify,
+                timeout=timeout
             )
 
     @staticmethod
@@ -795,7 +847,8 @@ class ContainerImageRegistryClient:
             config_desc: ContainerImageDescriptor,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> Dict[str, Any]:
         """
         Fetches a config blob from the registry API and returns as a dict
@@ -806,6 +859,7 @@ class ContainerImageRegistryClient:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             Dict[str, Any]: The config as a dict
@@ -817,7 +871,12 @@ class ContainerImageRegistryClient:
         
         # Query the blob, get the config response
         res = ContainerImageRegistryClient.query_blob(
-            ref, config_desc, auth, skip_verify=skip_verify, http=http
+            ref,
+            config_desc,
+            auth,
+            skip_verify=skip_verify,
+            http=http,
+            timeout=timeout
         )
 
         # Load the config into a dict and return
@@ -829,7 +888,8 @@ class ContainerImageRegistryClient:
             str_or_ref: Union[str, ContainerImageReference],
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> requests.Response:
         """
         Fetches the list of tags for a reference from the registry API and
@@ -840,6 +900,7 @@ class ContainerImageRegistryClient:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         
         Returns:
             requests.Response: The registry API tag list response
@@ -874,20 +935,25 @@ class ContainerImageRegistryClient:
         res = requests.get(
             api_url,
             headers=headers,
-            verify=not skip_verify
+            verify=not skip_verify,
+            timeout=timeout
         )
         if res.status_code == 401 and \
             'www-authenticate' in res.headers.keys():
             # Do Oauth dance if basic auth fails
             # Ref: https://distribution.github.io/distribution/spec/auth/token/
             scheme, token = ContainerImageRegistryClient.get_auth_token(
-                res, reg_auth, skip_verify=skip_verify
+                res,
+                reg_auth,
+                skip_verify=skip_verify,
+                timeout=timeout
             )
             headers['Authorization'] = f'{scheme} {token}'
             res = requests.get(
                 api_url,
                 headers=headers,
-                verify=not skip_verify
+                verify=not skip_verify,
+                timeout=timeout
             )
 
         # Raise exceptions on error status codes
@@ -899,7 +965,8 @@ class ContainerImageRegistryClient:
             str_or_ref: Union[str, ContainerImageReference],
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> Dict[str, Any]:
         """
         Fetches the list of tags for a reference from the registry API and
@@ -910,6 +977,7 @@ class ContainerImageRegistryClient:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         
         Returns:
             Dict[str, Any]: The config as a dict
@@ -921,7 +989,7 @@ class ContainerImageRegistryClient:
 
         # Query the tags, get the tag list response
         res = ContainerImageRegistryClient.query_tags(
-            ref, auth, skip_verify=skip_verify, http=http
+            ref, auth, skip_verify=skip_verify, http=http, timeout=timeout
         )
 
         # Load the tag list into a dict and return
@@ -933,7 +1001,8 @@ class ContainerImageRegistryClient:
             str_or_ref: Union[str, ContainerImageReference],
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> requests.Response:
         """
         Fetches the manifest from the registry API and returns as a requests
@@ -944,6 +1013,7 @@ class ContainerImageRegistryClient:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             requests.Response: The registry API response
@@ -979,20 +1049,22 @@ class ContainerImageRegistryClient:
         res = requests.get(
             api_url,
             headers=headers,
-            verify=not skip_verify
+            verify=not skip_verify,
+            timeout=timeout
         )
         if res.status_code == 401 and \
             'www-authenticate' in res.headers.keys():
             # Do Oauth dance if basic auth fails
             # Ref: https://distribution.github.io/distribution/spec/auth/token/
             scheme, token = ContainerImageRegistryClient.get_auth_token(
-                res, reg_auth, skip_verify=skip_verify
+                res, reg_auth, skip_verify=skip_verify, timeout=timeout
             )
             headers['Authorization'] = f'{scheme} {token}'
             res = requests.get(
                 api_url,
                 headers=headers,
-                verify=not skip_verify
+                verify=not skip_verify,
+                timeout=timeout
             )
 
         # Raise exceptions on error status codes
@@ -1004,7 +1076,8 @@ class ContainerImageRegistryClient:
             str_or_ref: Union[str, ContainerImageReference],
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> bytes:
         """
         Fetches the manifest from the registry API and returns as raw bytes
@@ -1014,6 +1087,7 @@ class ContainerImageRegistryClient:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             bytes: The raw manifest bytes
@@ -1025,7 +1099,7 @@ class ContainerImageRegistryClient:
         
         # Query the manifest, get the manifest response, return raw response
         res = ContainerImageRegistryClient.query_manifest(
-            ref, auth, skip_verify=skip_verify, http=http
+            ref, auth, skip_verify=skip_verify, http=http, timeout=timeout
         )
         return res.content
     
@@ -1036,7 +1110,8 @@ class ContainerImageRegistryClient:
             media_type: str,
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ):
         """
         Uploads a manifest to the registry API underneath the given reference
@@ -1048,6 +1123,7 @@ class ContainerImageRegistryClient:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         """
         # If given a str, then load as a ref
         ref = str_or_ref
@@ -1080,21 +1156,23 @@ class ContainerImageRegistryClient:
             api_url,
             headers=headers,
             data=manifest,
-            verify=not skip_verify
+            verify=not skip_verify,
+            timeout=timeout
         )
         if res.status_code == 401 and \
             'www-authenticate' in res.headers.keys():
             # Do Oauth dance if basic auth fails
             # Ref: https://distribution.github.io/distribution/spec/auth/token/
             scheme, token = ContainerImageRegistryClient.get_auth_token(
-                res, reg_auth, skip_verify=skip_verify
+                res, reg_auth, skip_verify=skip_verify, timeout=timeout
             )
             headers['Authorization'] = f'{scheme} {token}'
             res = requests.put(
                 api_url,
                 headers=headers,
                 data=manifest,
-                verify=not skip_verify
+                verify=not skip_verify,
+                timeout=timeout
             )
         
         # Raise exceptions if any HTTP error response codes are returned
@@ -1105,7 +1183,8 @@ class ContainerImageRegistryClient:
             str_or_ref: Union[str, ContainerImageReference],
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ) -> str:
         """
         Fetches the digest from the registry API
@@ -1115,6 +1194,7 @@ class ContainerImageRegistryClient:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
 
         Returns:
             str: The image digest
@@ -1126,7 +1206,7 @@ class ContainerImageRegistryClient:
         
         # Query the manifest, get the manifest response
         res = ContainerImageRegistryClient.query_manifest(
-            ref, auth, skip_verify=skip_verify, http=http
+            ref, auth, skip_verify=skip_verify, http=http, timeout=timeout
         )
 
         # Load the digest header if given, otherwise compute the digest
@@ -1149,7 +1229,8 @@ class ContainerImageRegistryClient:
             str_or_ref: Union[str, ContainerImageReference],
             auth: Dict[str, Any],
             skip_verify: bool=False,
-            http: bool=False
+            http: bool=False,
+            timeout: int=DEFAULT_TIMEOUT
         ):
         """
         Deletes the reference from the registry using the registry API
@@ -1159,6 +1240,7 @@ class ContainerImageRegistryClient:
             auth (Dict[str, Any]): A valid docker config JSON loaded into a dict
             skip_verify (bool): Insecure, skip TLS cert verification
             http (bool): Insecure, whether to use HTTP (not HTTPs)
+            timeout (int): The timeout in seconds for establishing a connection with the registry
         """
         # If given a str, then load as a ref
         ref = str_or_ref
@@ -1189,20 +1271,22 @@ class ContainerImageRegistryClient:
         res = requests.delete(
             api_url,
             headers=headers,
-            verify=not skip_verify
+            verify=not skip_verify,
+            timeout=timeout
         )
         if res.status_code == 401 and \
             'www-authenticate' in res.headers.keys():
             # Do Oauth dance if basic auth fails
             # Ref: https://distribution.github.io/distribution/spec/auth/token/
             scheme, token = ContainerImageRegistryClient.get_auth_token(
-                res, reg_auth, skip_verify=skip_verify
+                res, reg_auth, skip_verify=skip_verify, timeout=timeout
             )
             headers['Authorization'] = f'{scheme} {token}'
             res = requests.delete(
                 api_url,
                 headers=headers,
-                verify=not skip_verify
+                verify=not skip_verify,
+                timeout=timeout
             )
 
         # Raise exceptions on error status codes
