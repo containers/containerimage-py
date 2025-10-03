@@ -107,7 +107,8 @@ def mock_get_manifest(
         ref_or_img: Union[str, ContainerImage],
         auth: Dict[str, Any],
         http: bool=False,
-        skip_verify: bool=False
+        skip_verify: bool=False,
+        timeout: int=10
     ) -> Type[
         ContainerImageManifestV2S2
     ]:
@@ -163,7 +164,8 @@ def mock_get_config(
         config_desc: ContainerImageDescriptor,
         auth: Dict[str, Any],
         http: bool=False,
-        skip_verify: bool=False
+        skip_verify: bool=False,
+        timeout: int=10
     ) -> Dict[str, Any]:
     """
     Mocks the ContainerImageRegistryClient.get_config function
@@ -184,7 +186,8 @@ def mock_get_digest(
         ref_or_img: Union[str, ContainerImage],
         auth: Dict[str, Any],
         http: bool=False,
-        skip_verify: bool=False
+        skip_verify: bool=False,
+        timeout: int=10
     ) -> str:
     """
     Mocks the ContainerImageRegistryClient.get_digest function
@@ -205,7 +208,8 @@ def mock_list_tags(
         ref_or_img: Union[str, ContainerImage],
         auth: Dict[str, Any],
         http: bool=False,
-        skip_verify: bool=False
+        skip_verify: bool=False,
+        timeout: int=10
     ) -> Dict[str, Any]:
     """
     Mocks the ContainerImageRegistryClient.list_tags function
