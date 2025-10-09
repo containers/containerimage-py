@@ -38,3 +38,9 @@ OCI_INDEX_MEDIA_TYPE = "application/vnd.oci.image.index.v1+json"
 """
 The mediaType for an OCI image index, also known as a multi-arch image
 """
+
+# See doc comments below
+COMPRESSED_LAYER_MEDIA_TYPE = "application/vnd.docker.image.rootfs.diff.tar.gzip"
+"""
+The mediaType for a container image layer that has been TGZ compressed
+"""
