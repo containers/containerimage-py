@@ -22,7 +22,8 @@ license-files = [
 ]
 dependencies = [
     "requests",
-    "jsonschema"
+    "jsonschema",
+    "artifact-lint-py"
 ]
 
 [project.urls]
