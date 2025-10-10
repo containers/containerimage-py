@@ -84,6 +84,14 @@ image.inspectschema module
    :undoc-members:
    :show-inheritance:
 
+image.linter module
+-------------------
+
+.. automodule:: image.linter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 image.manifest module
 ---------------------
 

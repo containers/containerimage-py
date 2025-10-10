@@ -1,5 +1,6 @@
 import image.auth
 import image.byteunit
+import image.cli.cli
 import image.client
 import image.config
 import image.configschema
