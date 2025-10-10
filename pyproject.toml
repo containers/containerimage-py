@@ -22,7 +22,8 @@ license-files = [
 ]
 dependencies = [
     "requests",
-    "jsonschema"
+    "jsonschema",
+    "artifact-lint-py"
 ]
 
 [project.urls]
@@ -33,3 +34,6 @@ Issues = "https://github.com/whatsacomputertho/containerimage-py/issues"
 test = ["tox","pytest","pytest-mock","pytest-cov"]
 build = ["build"]
 doc = ["sphinx","sphinx_rtd_theme"]
+
+[project.scripts]
+containerimage-py = "image.cli.cli:main"
