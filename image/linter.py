@@ -381,12 +381,12 @@ class ContainerImageLinter(
         else:
             manifests.append(manifest)
             results.extend(self.manifest_linter.lint(manifest, config))
-            config = ContainerImage.get_config_static(
+            img_config = ContainerImage.get_config_static(
                 ref=artifact,
                 manifest=manifest,
                 auth=AUTH
             )
-            results.extend(self.config_linter.lint(config, config))
+            results.extend(self.config_linter.lint(img_config, config))
         
         # Even though it should always exist, this is protection against OOB
         if len(self.rules) > 0:
