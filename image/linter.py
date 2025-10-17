@@ -318,7 +318,7 @@ class ContainerImageIsLessThanSizeLimit(
                 return LintResult(
                     status=LintStatus.WARNING,
                     message=f"({self.name()}) " + \
-                        f"image is larger than {warning_threshold_formatted} " + \
+                        f"image is larger than {warning_threshold_formatted}: " + \
                         size_formatted
                 )
             return LintResult(
@@ -366,17 +366,13 @@ class ContainerImageLinter(
     def lint(
             self,
             artifact: ContainerImage,
-            config: LintRuleConfig=DEFAULT_LINT_RULE_CONFIG,
+            config: LinterConfig=DEFAULT_CONTAINER_IMAGE_LINTER_CONFIG,
             **kwargs
         ) -> list[LintResult]:
         """
         Implementation of the container image linter
         """
         results = []
-
-        # Execute each container image lint rule
-        for rule in self.rules:
-            results.append(rule.lint(artifact, config))
 
         # Fetch the container image manifests and config, lint them as we go
         auth=kwargs.get("auth", AUTH)
@@ -423,7 +419,7 @@ class ContainerImageLinter(
             results.append(
                 self.rules[0].lint(
                     artifact,
-                    config.config.get(
+                    config=config.config.get(
                         self.rules[0].name(),
                         DEFAULT_LINT_RULE_CONFIG
                     ),
