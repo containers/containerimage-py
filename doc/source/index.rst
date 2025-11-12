@@ -58,12 +58,12 @@ Run the following command to install the latest version of this package using pi
 
 1. Clone `the source repository <https://github.com/containers/containerimage-py>`_
 2. Build the project from source following `the build instructions <Build_>`_
-3. Locate the ``.whl`` (wheel) file in the ``dist`` folder. It should be named something like so: ``containerimage_py-1.1.1-py3-none-any.whl``
+3. Locate the ``.whl`` (wheel) file in the ``dist`` folder. It should be named something like so: ``containerimage_py-1.1.2-py3-none-any.whl``
 4. Run the following command from the root of the repository, replacing the name of the ``.whl`` file if necessary
 
 .. code-block:: shell
 
-   pip install dist/containerimage_py-1.1.1-py3-none-any.whl
+   pip install dist/containerimage_py-1.1.2-py3-none-any.whl
 
 
 Build
