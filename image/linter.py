@@ -46,44 +46,50 @@ class ManifestSupportsRequiredMediaTypes(
         """
         Implementation of the ManifestLayersSupportRequiredMediaTypes lint rule
         """
-        # Validate the manifest mediaType
-        manifest_media_type = artifact.get_media_type()
-        expected_manifest_media_types = config.config.get(
-            "manifest-media-types",
-            [
-                DOCKER_V2S2_MEDIA_TYPE,
-                OCI_MANIFEST_MEDIA_TYPE
-            ]
-        )
-        if manifest_media_type not in expected_manifest_media_types:
-            return LintResult(
-                status=LintStatus.ERROR,
-                message=f"({self.name()})" + \
-                    f" manifest has mediaType {manifest_media_type}, " + \
-                    f"expected one of {expected_manifest_media_types}"
+        try:
+            # Validate the manifest mediaType
+            manifest_media_type = artifact.get_media_type()
+            expected_manifest_media_types = config.config.get(
+                "manifest-media-types",
+                [
+                    DOCKER_V2S2_MEDIA_TYPE,
+                    OCI_MANIFEST_MEDIA_TYPE
+                ]
             )
-
-        # Validate each layer mediaType
-        expected_layer_media_types = config.config.get(
-            "layer-media-types",
-            [
-                COMPRESSED_LAYER_MEDIA_TYPE
-            ]
-        )
-        for layer in artifact.get_layer_descriptors():
-            layer_media_type = layer.get_media_type()
-            if layer_media_type not in expected_layer_media_types:
+            if manifest_media_type not in expected_manifest_media_types:
                 return LintResult(
                     status=LintStatus.ERROR,
-                    message=f"({self.name()}) " + \
-                        f"layer {layer.get_digest()} has mediaType " + \
-                        f"{layer_media_type}, expected one of " + \
-                        str(expected_layer_media_types)
+                    message=f"({self.name()})" + \
+                        f" manifest has mediaType {manifest_media_type}, " + \
+                        f"expected one of {expected_manifest_media_types}"
                 )
-        return LintResult(
-            message= f"({self.name()}) " + \
-                "manifest and layers support expected mediaTypes"
-        )
+
+            # Validate each layer mediaType
+            expected_layer_media_types = config.config.get(
+                "layer-media-types",
+                [
+                    COMPRESSED_LAYER_MEDIA_TYPE
+                ]
+            )
+            for layer in artifact.get_layer_descriptors():
+                layer_media_type = layer.get_media_type()
+                if layer_media_type not in expected_layer_media_types:
+                    return LintResult(
+                        status=LintStatus.ERROR,
+                        message=f"({self.name()}) " + \
+                            f"layer {layer.get_digest()} has mediaType " + \
+                            f"{layer_media_type}, expected one of " + \
+                            str(expected_layer_media_types)
+                    )
+            return LintResult(
+                message= f"({self.name()}) " + \
+                    "manifest and layers support expected mediaTypes"
+            )
+        except Exception as e:
+            return LintResult(
+                status=LintStatus.ERROR,
+                message=f"({self.name()}) {type(e).__name__} while linting: {str(e)}"
+            )
 
 class ContainerImageManifestLinter(
         Linter[ContainerImageManifest]
@@ -107,23 +113,29 @@ class ManifestListSupportsRequiredPlatforms(
         """
         Implementation of the ManifestListSupportsRequiredPlatforms lint rule
         """
-        required = config.config.get("platforms", [ "linux/amd64" ])
-        platforms = set(
-            str(entry.get_platform()) for entry in artifact.get_entries()
-        )
-        missing = list(set(required).difference(platforms))
-        if len(missing) > 0:
+        try:
+            required = config.config.get("platforms", [ "linux/amd64" ])
+            platforms = set(
+                str(entry.get_platform()) for entry in artifact.get_entries()
+            )
+            missing = list(set(required).difference(platforms))
+            if len(missing) > 0:
+                return LintResult(
+                    status=LintStatus.ERROR,
+                    message=f"({self.name()}) manifest list does not support " + \
+                        "the following required platforms: " + \
+                        str([ str(platform) for platform in missing ])
+                )
+            return LintResult(
+                status=LintStatus.INFO,
+                message=f"({self.name()}) " + \
+                    "manifest list supports all required platforms"
+            )
+        except Exception as e:
             return LintResult(
                 status=LintStatus.ERROR,
-                message=f"({self.name()}) manifest list does not support " + \
-                    "the following required platforms: " + \
-                    str([ str(platform) for platform in missing ])
+                message=f"({self.name()}) {type(e).__name__} while linting: {str(e)}"
             )
-        return LintResult(
-            status=LintStatus.INFO,
-            message=f"({self.name()}) " + \
-                "manifest list supports all required platforms"
-        )
 
 class ManifestListSupportsRequiredMediaTypes(
         LintRule[ContainerImageManifestList]
@@ -141,42 +153,48 @@ class ManifestListSupportsRequiredMediaTypes(
         """
         Implementation of the ManifestListSupportsRequiredMediaTypes lint rule
         """
-        list_media_type = artifact.get_media_type()
-        expected_list_media_types = config.config.get(
-            "manifest-list-media-types",
-            [
-                DOCKER_V2S2_LIST_MEDIA_TYPE,
-                OCI_INDEX_MEDIA_TYPE
-            ]
-        )
-        if not list_media_type in expected_list_media_types:
-            return LintResult(
-                status=LintStatus.ERROR,
-                message=f"({self.name()}) " + \
-                    f"manifest list has mediaType {list_media_type}, " + \
-                    f"expected one of {str(expected_list_media_types)}"
-            )
-        for entry in artifact.get_entries():
-            manifest_media_type = entry.get_media_type()
-            expected_media_types = config.config.get(
-                "manifest-media-types",
+        try:
+            list_media_type = artifact.get_media_type()
+            expected_list_media_types = config.config.get(
+                "manifest-list-media-types",
                 [
-                    DOCKER_V2S2_MEDIA_TYPE,
-                    OCI_MANIFEST_MEDIA_TYPE
+                    DOCKER_V2S2_LIST_MEDIA_TYPE,
+                    OCI_INDEX_MEDIA_TYPE
                 ]
             )
-            if not manifest_media_type in expected_media_types:
+            if not list_media_type in expected_list_media_types:
                 return LintResult(
                     status=LintStatus.ERROR,
                     message=f"({self.name()}) " + \
-                        f"manifest {entry.get_platform()} has mediaType " + \
-                        f"{manifest_media_type}, expected one of " + \
-                        str(expected_media_types)
+                        f"manifest list has mediaType {list_media_type}, " + \
+                        f"expected one of {str(expected_list_media_types)}"
                 )
-        return LintResult(
-            message=f"({self.name()}) " + \
-                "manifest list and manifests support expected maediaTypes"
-        )
+            for entry in artifact.get_entries():
+                manifest_media_type = entry.get_media_type()
+                expected_media_types = config.config.get(
+                    "manifest-media-types",
+                    [
+                        DOCKER_V2S2_MEDIA_TYPE,
+                        OCI_MANIFEST_MEDIA_TYPE
+                    ]
+                )
+                if not manifest_media_type in expected_media_types:
+                    return LintResult(
+                        status=LintStatus.ERROR,
+                        message=f"({self.name()}) " + \
+                            f"manifest {entry.get_platform()} has mediaType " + \
+                            f"{manifest_media_type}, expected one of " + \
+                            str(expected_media_types)
+                    )
+            return LintResult(
+                message=f"({self.name()}) " + \
+                    "manifest list and manifests support expected maediaTypes"
+            )
+        except Exception as e:
+            return LintResult(
+                status=LintStatus.ERROR,
+                message=f"({self.name()}) {type(e).__name__} while linting: {str(e)}"
+            )
 
 class ContainerImageManifestListLinter(
         Linter[ContainerImageManifestList]
@@ -202,32 +220,38 @@ class ConfigIsLessThanNDaysOld(
         """
         Implementation of the ConfigIsLessThanNDaysOld lint rule
         """
-        current_datetime = datetime.now()
+        try:
+            current_datetime = datetime.now()
 
-        # Get the created date and convert to a backward-compatible
-        # python-parseable format
-        created_date = artifact.get_created_date()
-        created_date.replace('Z', '')
-        dt, frac = created_date.split('.')
-        frac = frac[:6]
-        iso_str = f"{dt}.{frac}"
-        config_created_datetime = datetime.fromisoformat(iso_str)
+            # Get the created date and convert to a backward-compatible
+            # python-parseable format
+            created_date = artifact.get_created_date()
+            created_date.replace('Z', '')
+            dt, frac = created_date.split('.')
+            frac = frac[:6]
+            iso_str = f"{dt}.{frac}"
+            config_created_datetime = datetime.fromisoformat(iso_str)
 
-        diff = current_datetime - config_created_datetime
-        error_threshold = config.config.get("error-threshold", 60)
-        warning_threshold = config.config.get("warning-threshold", 30)
-        message = f"({self.name()}) created date is {diff.days} days old"
-        if diff.days > error_threshold:
+            diff = current_datetime - config_created_datetime
+            error_threshold = config.config.get("error-threshold", 60)
+            warning_threshold = config.config.get("warning-threshold", 30)
+            message = f"({self.name()}) created date is {diff.days} days old"
+            if diff.days > error_threshold:
+                return LintResult(
+                    status=LintStatus.ERROR,
+                    message=message
+                )
+            elif diff.days > warning_threshold:
+                return LintResult(
+                    status=LintStatus.WARNING,
+                    message=message
+                )
+            return LintResult(message=message)
+        except Exception as e:
             return LintResult(
                 status=LintStatus.ERROR,
-                message=message
+                message=f"({self.name()}) {type(e).__name__} while linting: {str(e)}"
             )
-        elif diff.days > warning_threshold:
-            return LintResult(
-                status=LintStatus.WARNING,
-                message=message
-            )
-        return LintResult(message=message)
 
 class ContainerImageConfigLinter(
         Linter[ContainerImageConfig]
@@ -253,52 +277,58 @@ class ContainerImageIsLessThanSizeLimit(
         """
         Implementation of the ContainerImageIsLessThanSizeLimit lint rule
         """
-        # Check if manifests were passed in explicitly
-        manifests = kwargs.get("manifests")
+        try:
+            # Check if manifests were passed in explicitly
+            manifests = kwargs.get("manifests")
 
-        # If so, calculate size using the given manifests and configs
-        # Otherwise calculate the size using the container image
-        size = 0
-        if manifests is not None:
-            for manifest in manifests:
-                size += manifest.get_size()
-        else:
-            auth = kwargs.get("auth", AUTH)
-            size = artifact.get_size(auth=auth)
-        
-        # Compare against the size limit
-        error_threshold = config.config.get(
-            "error-threshold",
-            2147483648
-        ) # 2GB
-        warning_threshold = config.config.get(
-            "warning-threshold",
-            1073741824
-        ) # 1GB
-        error_threshold_formatted = ByteUnit.format_size_bytes(
-            error_threshold
-        )
-        warning_threshold_formatted = ByteUnit.format_size_bytes(
-            warning_threshold
-        )
-        size_formatted = ByteUnit.format_size_bytes(size)
-        if size > error_threshold:
+            # If so, calculate size using the given manifests and configs
+            # Otherwise calculate the size using the container image
+            size = 0
+            if manifests is not None:
+                for manifest in manifests:
+                    size += manifest.get_size()
+            else:
+                auth = kwargs.get("auth", AUTH)
+                size = artifact.get_size(auth=auth)
+            
+            # Compare against the size limit
+            error_threshold = config.config.get(
+                "error-threshold",
+                2147483648
+            ) # 2GB
+            warning_threshold = config.config.get(
+                "warning-threshold",
+                1073741824
+            ) # 1GB
+            error_threshold_formatted = ByteUnit.format_size_bytes(
+                error_threshold
+            )
+            warning_threshold_formatted = ByteUnit.format_size_bytes(
+                warning_threshold
+            )
+            size_formatted = ByteUnit.format_size_bytes(size)
+            if size > error_threshold:
+                return LintResult(
+                    status=LintStatus.ERROR,
+                    message=f"({self.name()}) " + \
+                        f"image is larger than {error_threshold_formatted}: " + \
+                        size_formatted
+                )
+            elif size > warning_threshold:
+                return LintResult(
+                    status=LintStatus.WARNING,
+                    message=f"({self.name()}) " + \
+                        f"image is larger than {warning_threshold_formatted}: " + \
+                        size_formatted
+                )
+            return LintResult(
+                message=f"({self.name()}) image size is ok: {size_formatted}"
+            )
+        except Exception as e:
             return LintResult(
                 status=LintStatus.ERROR,
-                message=f"({self.name()}) " + \
-                    f"image is larger than {error_threshold_formatted}: " + \
-                    size_formatted
+                message=f"({self.name()}) {type(e).__name__} while linting: {str(e)}"
             )
-        elif size > warning_threshold:
-            return LintResult(
-                status=LintStatus.WARNING,
-                message=f"({self.name()}) " + \
-                    f"image is larger than {warning_threshold_formatted} " + \
-                    size_formatted
-            )
-        return LintResult(
-            message=f"({self.name()}) image size is ok: {size_formatted}"
-        )
 
 class ContainerImageLinter(
         Linter[ContainerImage]
@@ -336,17 +366,13 @@ class ContainerImageLinter(
     def lint(
             self,
             artifact: ContainerImage,
-            config: LintRuleConfig=DEFAULT_LINT_RULE_CONFIG,
+            config: LinterConfig=DEFAULT_CONTAINER_IMAGE_LINTER_CONFIG,
             **kwargs
         ) -> list[LintResult]:
         """
         Implementation of the container image linter
         """
         results = []
-
-        # Execute each container image lint rule
-        for rule in self.rules:
-            results.append(rule.lint(artifact, config))
 
         # Fetch the container image manifests and config, lint them as we go
         auth=kwargs.get("auth", AUTH)
@@ -393,7 +419,7 @@ class ContainerImageLinter(
             results.append(
                 self.rules[0].lint(
                     artifact,
-                    config.config.get(
+                    config=config.config.get(
                         self.rules[0].name(),
                         DEFAULT_LINT_RULE_CONFIG
                     ),
