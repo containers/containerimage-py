@@ -387,7 +387,7 @@ class ContainerImageLinter(
                 arch_image = ContainerImage(
                     f"{artifact.get_name()}@{entry.get_digest()}"
                 )
-                arch_manifest = arch_image.get_manifest(auth=AUTH)
+                arch_manifest = arch_image.get_manifest(auth=auth)
                 manifests.append(arch_manifest)
                 manifest_results = self.manifest_linter.lint(
                     arch_manifest, config
@@ -398,7 +398,7 @@ class ContainerImageLinter(
                 arch_config = ContainerImage.get_config_static(
                     ref=arch_image,
                     manifest=arch_manifest,
-                    auth=AUTH
+                    auth=auth
                 )
                 config_results = self.config_linter.lint(arch_config, config)
                 for result in config_results:
@@ -410,7 +410,7 @@ class ContainerImageLinter(
             img_config = ContainerImage.get_config_static(
                 ref=artifact,
                 manifest=manifest,
-                auth=AUTH
+                auth=auth
             )
             results.extend(self.config_linter.lint(img_config, config))
         
