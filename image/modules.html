@@ -1,0 +1,434 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>containerimage-py &mdash; containerimage-py 1.1.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="shortcut icon" href="../_static/container-image-py-favicon.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=00f267c6"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="image package" href="image.html" />
+    <link rel="prev" title="containerimage-py documentation" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            containerimage-py
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">containerimage-py</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="image.html">image package</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">containerimage-py</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">containerimage-py</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/image/modules.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="containerimage-py">
+<h1>containerimage-py<a class="headerlink" href="#containerimage-py" title="Link to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="image.html">image package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="image.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.auth">image.auth module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.auth.AUTH"><code class="docutils literal notranslate"><span class="pre">AUTH</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.byteunit">image.byteunit module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.byteunit.ByteUnit"><code class="docutils literal notranslate"><span class="pre">ByteUnit</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.byteunit.ByteUnit.format_size_bytes"><code class="docutils literal notranslate"><span class="pre">ByteUnit.format_size_bytes()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.client">image.client module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.append_query_params"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.append_query_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.blob_exists"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.blob_exists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.delete"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.delete()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.get_auth_token"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.get_auth_token()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.get_blob"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.get_blob()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.get_config"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.get_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.get_digest"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.get_digest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.get_manifest"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.get_manifest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.get_registry_auth"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.get_registry_auth()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.get_registry_base_url"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.get_registry_base_url()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.initialize_upload"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.initialize_upload()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.list_tags"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.list_tags()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.query_blob"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.query_blob()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.query_manifest"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.query_manifest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.query_tags"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.query_tags()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.upload_blob"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.upload_blob()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.upload_chunk"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.upload_chunk()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.client.ContainerImageRegistryClient.upload_manifest"><code class="docutils literal notranslate"><span class="pre">ContainerImageRegistryClient.upload_manifest()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.client.DEFAULT_CHUNK_SIZE"><code class="docutils literal notranslate"><span class="pre">DEFAULT_CHUNK_SIZE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.client.DEFAULT_REQUEST_MANIFEST_MEDIA_TYPES"><code class="docutils literal notranslate"><span class="pre">DEFAULT_REQUEST_MANIFEST_MEDIA_TYPES</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.client.DEFAULT_TIMEOUT"><code class="docutils literal notranslate"><span class="pre">DEFAULT_TIMEOUT</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.config">image.config module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.config.ContainerImageConfig"><code class="docutils literal notranslate"><span class="pre">ContainerImageConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.config.ContainerImageConfig.get_architecture"><code class="docutils literal notranslate"><span class="pre">ContainerImageConfig.get_architecture()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.config.ContainerImageConfig.get_author"><code class="docutils literal notranslate"><span class="pre">ContainerImageConfig.get_author()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.config.ContainerImageConfig.get_created_date"><code class="docutils literal notranslate"><span class="pre">ContainerImageConfig.get_created_date()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.config.ContainerImageConfig.get_env"><code class="docutils literal notranslate"><span class="pre">ContainerImageConfig.get_env()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.config.ContainerImageConfig.get_labels"><code class="docutils literal notranslate"><span class="pre">ContainerImageConfig.get_labels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.config.ContainerImageConfig.get_os"><code class="docutils literal notranslate"><span class="pre">ContainerImageConfig.get_os()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.config.ContainerImageConfig.get_platform"><code class="docutils literal notranslate"><span class="pre">ContainerImageConfig.get_platform()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.config.ContainerImageConfig.get_runtime_config"><code class="docutils literal notranslate"><span class="pre">ContainerImageConfig.get_runtime_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.config.ContainerImageConfig.get_variant"><code class="docutils literal notranslate"><span class="pre">ContainerImageConfig.get_variant()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.config.ContainerImageConfig.validate"><code class="docutils literal notranslate"><span class="pre">ContainerImageConfig.validate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.config.ContainerImageConfig.validate_static"><code class="docutils literal notranslate"><span class="pre">ContainerImageConfig.validate_static()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.configschema">image.configschema module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.configschema.CONTAINER_IMAGE_CONFIG_HISTORY_SCHEMA"><code class="docutils literal notranslate"><span class="pre">CONTAINER_IMAGE_CONFIG_HISTORY_SCHEMA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.configschema.CONTAINER_IMAGE_CONFIG_ROOTFS_SCHEMA"><code class="docutils literal notranslate"><span class="pre">CONTAINER_IMAGE_CONFIG_ROOTFS_SCHEMA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.configschema.CONTAINER_IMAGE_CONFIG_RUNTIME_CONFIG_SCHEMA"><code class="docutils literal notranslate"><span class="pre">CONTAINER_IMAGE_CONFIG_RUNTIME_CONFIG_SCHEMA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.configschema.CONTAINER_IMAGE_CONFIG_SCHEMA"><code class="docutils literal notranslate"><span class="pre">CONTAINER_IMAGE_CONFIG_SCHEMA</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.containerimage">image.containerimage module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.containerimage.ContainerImage"><code class="docutils literal notranslate"><span class="pre">ContainerImage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.copy"><code class="docutils literal notranslate"><span class="pre">ContainerImage.copy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.copy_blob"><code class="docutils literal notranslate"><span class="pre">ContainerImage.copy_blob()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.copy_manifest"><code class="docutils literal notranslate"><span class="pre">ContainerImage.copy_manifest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.copy_manifest_list"><code class="docutils literal notranslate"><span class="pre">ContainerImage.copy_manifest_list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.delete"><code class="docutils literal notranslate"><span class="pre">ContainerImage.delete()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.download"><code class="docutils literal notranslate"><span class="pre">ContainerImage.download()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.exists"><code class="docutils literal notranslate"><span class="pre">ContainerImage.exists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.get_config"><code class="docutils literal notranslate"><span class="pre">ContainerImage.get_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.get_config_static"><code class="docutils literal notranslate"><span class="pre">ContainerImage.get_config_static()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.get_digest"><code class="docutils literal notranslate"><span class="pre">ContainerImage.get_digest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.get_host_platform_manifest"><code class="docutils literal notranslate"><span class="pre">ContainerImage.get_host_platform_manifest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.get_host_platform_manifest_static"><code class="docutils literal notranslate"><span class="pre">ContainerImage.get_host_platform_manifest_static()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.get_manifest"><code class="docutils literal notranslate"><span class="pre">ContainerImage.get_manifest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.get_media_type"><code class="docutils literal notranslate"><span class="pre">ContainerImage.get_media_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.get_platforms"><code class="docutils literal notranslate"><span class="pre">ContainerImage.get_platforms()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.get_size"><code class="docutils literal notranslate"><span class="pre">ContainerImage.get_size()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.get_size_formatted"><code class="docutils literal notranslate"><span class="pre">ContainerImage.get_size_formatted()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.inspect"><code class="docutils literal notranslate"><span class="pre">ContainerImage.inspect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.is_manifest_list"><code class="docutils literal notranslate"><span class="pre">ContainerImage.is_manifest_list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.is_manifest_list_static"><code class="docutils literal notranslate"><span class="pre">ContainerImage.is_manifest_list_static()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.is_oci"><code class="docutils literal notranslate"><span class="pre">ContainerImage.is_oci()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.is_oci_static"><code class="docutils literal notranslate"><span class="pre">ContainerImage.is_oci_static()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.list_tags"><code class="docutils literal notranslate"><span class="pre">ContainerImage.list_tags()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImage.validate"><code class="docutils literal notranslate"><span class="pre">ContainerImage.validate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.containerimage.ContainerImageList"><code class="docutils literal notranslate"><span class="pre">ContainerImageList</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImageList.append"><code class="docutils literal notranslate"><span class="pre">ContainerImageList.append()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImageList.delete"><code class="docutils literal notranslate"><span class="pre">ContainerImageList.delete()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImageList.diff"><code class="docutils literal notranslate"><span class="pre">ContainerImageList.diff()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImageList.get_size"><code class="docutils literal notranslate"><span class="pre">ContainerImageList.get_size()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimage.ContainerImageList.get_size_formatted"><code class="docutils literal notranslate"><span class="pre">ContainerImageList.get_size_formatted()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.containerimage.ContainerImageListDiff"><code class="docutils literal notranslate"><span class="pre">ContainerImageListDiff</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.containerimage.wrapped_default"><code class="docutils literal notranslate"><span class="pre">wrapped_default()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.containerimageinspect">image.containerimageinspect module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.containerimageinspect.ContainerImageInspect"><code class="docutils literal notranslate"><span class="pre">ContainerImageInspect</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimageinspect.ContainerImageInspect.validate"><code class="docutils literal notranslate"><span class="pre">ContainerImageInspect.validate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.containerimageinspect.ContainerImageInspect.validate_static"><code class="docutils literal notranslate"><span class="pre">ContainerImageInspect.validate_static()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.descriptor">image.descriptor module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.descriptor.ContainerImageDescriptor"><code class="docutils literal notranslate"><span class="pre">ContainerImageDescriptor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.descriptor.ContainerImageDescriptor.get_annotations"><code class="docutils literal notranslate"><span class="pre">ContainerImageDescriptor.get_annotations()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.descriptor.ContainerImageDescriptor.get_digest"><code class="docutils literal notranslate"><span class="pre">ContainerImageDescriptor.get_digest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.descriptor.ContainerImageDescriptor.get_media_type"><code class="docutils literal notranslate"><span class="pre">ContainerImageDescriptor.get_media_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.descriptor.ContainerImageDescriptor.get_size"><code class="docutils literal notranslate"><span class="pre">ContainerImageDescriptor.get_size()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.descriptor.ContainerImageDescriptor.get_urls"><code class="docutils literal notranslate"><span class="pre">ContainerImageDescriptor.get_urls()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.descriptor.ContainerImageDescriptor.validate"><code class="docutils literal notranslate"><span class="pre">ContainerImageDescriptor.validate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.descriptor.ContainerImageDescriptor.validate_static"><code class="docutils literal notranslate"><span class="pre">ContainerImageDescriptor.validate_static()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.errors">image.errors module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.errors.ContainerImageError"><code class="docutils literal notranslate"><span class="pre">ContainerImageError</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.inspectschema">image.inspectschema module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.inspectschema.CONTAINER_IMAGE_INSPECT_SCHEMA"><code class="docutils literal notranslate"><span class="pre">CONTAINER_IMAGE_INSPECT_SCHEMA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.inspectschema.CONTAINER_IMAGE_LAYER_INSPECT_SCHEMA"><code class="docutils literal notranslate"><span class="pre">CONTAINER_IMAGE_LAYER_INSPECT_SCHEMA</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#image-linter-module">image.linter module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.manifest">image.manifest module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.manifest.ContainerImageManifest"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifest</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifest.ContainerImageManifest.get_config_descriptor"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifest.get_config_descriptor()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifest.ContainerImageManifest.get_layer_descriptors"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifest.get_layer_descriptors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifest.ContainerImageManifest.get_media_type"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifest.get_media_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifest.ContainerImageManifest.get_size"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifest.get_size()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifest.ContainerImageManifest.raw"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifest.raw()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.manifestfactory">image.manifestfactory module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.manifestfactory.ContainerImageManifestFactory"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestFactory</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifestfactory.ContainerImageManifestFactory.create"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestFactory.create()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifestfactory.ContainerImageManifestFactory.create_oci_image_index"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestFactory.create_oci_image_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifestfactory.ContainerImageManifestFactory.create_oci_manifest"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestFactory.create_oci_manifest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifestfactory.ContainerImageManifestFactory.create_v2s2_manifest"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestFactory.create_v2s2_manifest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifestfactory.ContainerImageManifestFactory.create_v2s2_manifest_list"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestFactory.create_v2s2_manifest_list()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.manifestlist">image.manifestlist module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.manifestlist.ContainerImageManifestList"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestList</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifestlist.ContainerImageManifestList.get_config_descriptors"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestList.get_config_descriptors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifestlist.ContainerImageManifestList.get_entries"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestList.get_entries()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifestlist.ContainerImageManifestList.get_entry_sizes"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestList.get_entry_sizes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifestlist.ContainerImageManifestList.get_layer_descriptors"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestList.get_layer_descriptors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifestlist.ContainerImageManifestList.get_manifests"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestList.get_manifests()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifestlist.ContainerImageManifestList.get_media_type"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestList.get_media_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifestlist.ContainerImageManifestList.get_size"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestList.get_size()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifestlist.ContainerImageManifestList.raw"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestList.raw()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.manifestlistentry">image.manifestlistentry module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.manifestlistentry.ContainerImageManifestListEntry"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestListEntry</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifestlistentry.ContainerImageManifestListEntry.get_digest"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestListEntry.get_digest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifestlistentry.ContainerImageManifestListEntry.get_media_type"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestListEntry.get_media_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifestlistentry.ContainerImageManifestListEntry.get_platform"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestListEntry.get_platform()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.manifestlistentry.ContainerImageManifestListEntry.get_size"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestListEntry.get_size()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.manifestschema">image.manifestschema module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.manifestschema.IMAGE_INDEX_ENTRY_PLATFORM_SCHEMA"><code class="docutils literal notranslate"><span class="pre">IMAGE_INDEX_ENTRY_PLATFORM_SCHEMA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.manifestschema.MANIFEST_DESCRIPTOR_SCHEMA"><code class="docutils literal notranslate"><span class="pre">MANIFEST_DESCRIPTOR_SCHEMA</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.mediatypes">image.mediatypes module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.mediatypes.COMPRESSED_LAYER_MEDIA_TYPE"><code class="docutils literal notranslate"><span class="pre">COMPRESSED_LAYER_MEDIA_TYPE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.mediatypes.DOCKER_V2S1_MEDIA_TYPE"><code class="docutils literal notranslate"><span class="pre">DOCKER_V2S1_MEDIA_TYPE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.mediatypes.DOCKER_V2S1_SIGNED_MEDIA_TYPE"><code class="docutils literal notranslate"><span class="pre">DOCKER_V2S1_SIGNED_MEDIA_TYPE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.mediatypes.DOCKER_V2S2_LIST_MEDIA_TYPE"><code class="docutils literal notranslate"><span class="pre">DOCKER_V2S2_LIST_MEDIA_TYPE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.mediatypes.DOCKER_V2S2_MEDIA_TYPE"><code class="docutils literal notranslate"><span class="pre">DOCKER_V2S2_MEDIA_TYPE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.mediatypes.OCI_INDEX_MEDIA_TYPE"><code class="docutils literal notranslate"><span class="pre">OCI_INDEX_MEDIA_TYPE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.mediatypes.OCI_MANIFEST_MEDIA_TYPE"><code class="docutils literal notranslate"><span class="pre">OCI_MANIFEST_MEDIA_TYPE</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.oci">image.oci module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.oci.ContainerImageIndexEntryOCI"><code class="docutils literal notranslate"><span class="pre">ContainerImageIndexEntryOCI</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.oci.ContainerImageIndexEntryOCI.from_manifest_list_entry"><code class="docutils literal notranslate"><span class="pre">ContainerImageIndexEntryOCI.from_manifest_list_entry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.oci.ContainerImageIndexEntryOCI.validate"><code class="docutils literal notranslate"><span class="pre">ContainerImageIndexEntryOCI.validate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.oci.ContainerImageIndexEntryOCI.validate_static"><code class="docutils literal notranslate"><span class="pre">ContainerImageIndexEntryOCI.validate_static()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.oci.ContainerImageIndexOCI"><code class="docutils literal notranslate"><span class="pre">ContainerImageIndexOCI</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.oci.ContainerImageIndexOCI.from_manifest_list"><code class="docutils literal notranslate"><span class="pre">ContainerImageIndexOCI.from_manifest_list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.oci.ContainerImageIndexOCI.get_oci_entries"><code class="docutils literal notranslate"><span class="pre">ContainerImageIndexOCI.get_oci_entries()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.oci.ContainerImageIndexOCI.get_oci_manifests"><code class="docutils literal notranslate"><span class="pre">ContainerImageIndexOCI.get_oci_manifests()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.oci.ContainerImageIndexOCI.validate"><code class="docutils literal notranslate"><span class="pre">ContainerImageIndexOCI.validate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.oci.ContainerImageIndexOCI.validate_static"><code class="docutils literal notranslate"><span class="pre">ContainerImageIndexOCI.validate_static()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.oci.ContainerImageManifestOCI"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestOCI</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.oci.ContainerImageManifestOCI.from_manifest"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestOCI.from_manifest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.oci.ContainerImageManifestOCI.validate"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestOCI.validate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.oci.ContainerImageManifestOCI.validate_static"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestOCI.validate_static()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.oci.UNSUPPORTED_OCI_INDEX_MEDIA_TYPES"><code class="docutils literal notranslate"><span class="pre">UNSUPPORTED_OCI_INDEX_MEDIA_TYPES</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.oci.UNSUPPORTED_OCI_MANIFEST_MEDIA_TYPES"><code class="docutils literal notranslate"><span class="pre">UNSUPPORTED_OCI_MANIFEST_MEDIA_TYPES</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.ocischema">image.ocischema module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.ocischema.IMAGE_INDEX_ENTRY_OCI_SCHEMA"><code class="docutils literal notranslate"><span class="pre">IMAGE_INDEX_ENTRY_OCI_SCHEMA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.ocischema.IMAGE_INDEX_OCI_SCHEMA"><code class="docutils literal notranslate"><span class="pre">IMAGE_INDEX_OCI_SCHEMA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.ocischema.MANIFEST_OCI_SCHEMA"><code class="docutils literal notranslate"><span class="pre">MANIFEST_OCI_SCHEMA</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.platform">image.platform module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.platform.ContainerImagePlatform"><code class="docutils literal notranslate"><span class="pre">ContainerImagePlatform</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.platform.ContainerImagePlatform.get_architecture"><code class="docutils literal notranslate"><span class="pre">ContainerImagePlatform.get_architecture()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.platform.ContainerImagePlatform.get_features"><code class="docutils literal notranslate"><span class="pre">ContainerImagePlatform.get_features()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.platform.ContainerImagePlatform.get_host_platform"><code class="docutils literal notranslate"><span class="pre">ContainerImagePlatform.get_host_platform()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.platform.ContainerImagePlatform.get_os"><code class="docutils literal notranslate"><span class="pre">ContainerImagePlatform.get_os()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.platform.ContainerImagePlatform.get_os_features"><code class="docutils literal notranslate"><span class="pre">ContainerImagePlatform.get_os_features()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.platform.ContainerImagePlatform.get_os_version"><code class="docutils literal notranslate"><span class="pre">ContainerImagePlatform.get_os_version()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.platform.ContainerImagePlatform.get_variant"><code class="docutils literal notranslate"><span class="pre">ContainerImagePlatform.get_variant()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.platform.ContainerImagePlatform.validate"><code class="docutils literal notranslate"><span class="pre">ContainerImagePlatform.validate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.platform.ContainerImagePlatform.validate_static"><code class="docutils literal notranslate"><span class="pre">ContainerImagePlatform.validate_static()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.platform.PLATFORM_ARCHITECTURE_MAP"><code class="docutils literal notranslate"><span class="pre">PLATFORM_ARCHITECTURE_MAP</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.reference">image.reference module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.reference.ContainerImageReference"><code class="docutils literal notranslate"><span class="pre">ContainerImageReference</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.reference.ContainerImageReference.get_identifier"><code class="docutils literal notranslate"><span class="pre">ContainerImageReference.get_identifier()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.reference.ContainerImageReference.get_name"><code class="docutils literal notranslate"><span class="pre">ContainerImageReference.get_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.reference.ContainerImageReference.get_path"><code class="docutils literal notranslate"><span class="pre">ContainerImageReference.get_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.reference.ContainerImageReference.get_registry"><code class="docutils literal notranslate"><span class="pre">ContainerImageReference.get_registry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.reference.ContainerImageReference.get_short_name"><code class="docutils literal notranslate"><span class="pre">ContainerImageReference.get_short_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.reference.ContainerImageReference.get_tag"><code class="docutils literal notranslate"><span class="pre">ContainerImageReference.get_tag()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.reference.ContainerImageReference.is_digest_ref"><code class="docutils literal notranslate"><span class="pre">ContainerImageReference.is_digest_ref()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.reference.ContainerImageReference.is_tag_ref"><code class="docutils literal notranslate"><span class="pre">ContainerImageReference.is_tag_ref()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.reference.ContainerImageReference.validate"><code class="docutils literal notranslate"><span class="pre">ContainerImageReference.validate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.reference.ContainerImageReference.validate_static"><code class="docutils literal notranslate"><span class="pre">ContainerImageReference.validate_static()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.regex">image.regex module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.ALPHA_NUMERIC"><code class="docutils literal notranslate"><span class="pre">ALPHA_NUMERIC</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.ANCHORED_DIGEST"><code class="docutils literal notranslate"><span class="pre">ANCHORED_DIGEST</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.ANCHORED_DOMAIN"><code class="docutils literal notranslate"><span class="pre">ANCHORED_DOMAIN</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.ANCHORED_NAME"><code class="docutils literal notranslate"><span class="pre">ANCHORED_NAME</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.ANCHORED_TAG"><code class="docutils literal notranslate"><span class="pre">ANCHORED_TAG</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.DIGEST_PAT"><code class="docutils literal notranslate"><span class="pre">DIGEST_PAT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.DOMAIN"><code class="docutils literal notranslate"><span class="pre">DOMAIN</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.DOMAIN_COMPONENT"><code class="docutils literal notranslate"><span class="pre">DOMAIN_COMPONENT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.IDENTIFIER"><code class="docutils literal notranslate"><span class="pre">IDENTIFIER</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.NAME_COMPONENT"><code class="docutils literal notranslate"><span class="pre">NAME_COMPONENT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.NAME_PAT"><code class="docutils literal notranslate"><span class="pre">NAME_PAT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.REFERENCE_PAT"><code class="docutils literal notranslate"><span class="pre">REFERENCE_PAT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.SEPARATOR"><code class="docutils literal notranslate"><span class="pre">SEPARATOR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.SHORT_IDENTIFIER"><code class="docutils literal notranslate"><span class="pre">SHORT_IDENTIFIER</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.TAG_PAT"><code class="docutils literal notranslate"><span class="pre">TAG_PAT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.anchored"><code class="docutils literal notranslate"><span class="pre">anchored()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.capture"><code class="docutils literal notranslate"><span class="pre">capture()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.expression"><code class="docutils literal notranslate"><span class="pre">expression()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.group"><code class="docutils literal notranslate"><span class="pre">group()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.literal"><code class="docutils literal notranslate"><span class="pre">literal()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.optional"><code class="docutils literal notranslate"><span class="pre">optional()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.regex.repeated"><code class="docutils literal notranslate"><span class="pre">repeated()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.v2s2">image.v2s2 module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.v2s2.ContainerImageManifestListEntryV2S2"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestListEntryV2S2</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.v2s2.ContainerImageManifestListEntryV2S2.from_manifest_list_entry"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestListEntryV2S2.from_manifest_list_entry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.v2s2.ContainerImageManifestListEntryV2S2.validate"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestListEntryV2S2.validate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.v2s2.ContainerImageManifestListEntryV2S2.validate_static"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestListEntryV2S2.validate_static()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.v2s2.ContainerImageManifestListV2S2"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestListV2S2</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.v2s2.ContainerImageManifestListV2S2.from_manifest_list"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestListV2S2.from_manifest_list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.v2s2.ContainerImageManifestListV2S2.get_v2s2_entries"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestListV2S2.get_v2s2_entries()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.v2s2.ContainerImageManifestListV2S2.get_v2s2_manifests"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestListV2S2.get_v2s2_manifests()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.v2s2.ContainerImageManifestListV2S2.validate"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestListV2S2.validate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.v2s2.ContainerImageManifestListV2S2.validate_static"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestListV2S2.validate_static()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.v2s2.ContainerImageManifestV2S2"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestV2S2</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.v2s2.ContainerImageManifestV2S2.from_manifest"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestV2S2.from_manifest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.v2s2.ContainerImageManifestV2S2.validate"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestV2S2.validate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="image.html#image.v2s2.ContainerImageManifestV2S2.validate_static"><code class="docutils literal notranslate"><span class="pre">ContainerImageManifestV2S2.validate_static()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.v2s2.UNSUPPORTED_V2S2_MANIFEST_LIST_MEDIA_TYPES"><code class="docutils literal notranslate"><span class="pre">UNSUPPORTED_V2S2_MANIFEST_LIST_MEDIA_TYPES</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.v2s2.UNSUPPORTED_V2S2_MANIFEST_MEDIA_TYPES"><code class="docutils literal notranslate"><span class="pre">UNSUPPORTED_V2S2_MANIFEST_MEDIA_TYPES</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-image.v2s2schema">image.v2s2schema module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.v2s2schema.MANIFEST_LIST_V2_ENTRY_SCHEMA"><code class="docutils literal notranslate"><span class="pre">MANIFEST_LIST_V2_ENTRY_SCHEMA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="image.html#image.v2s2schema.MANIFEST_LIST_V2_SCHEMA"><code class="docutils literal notranslate"><span class="pre">MANIFEST_LIST_V2_SCHEMA</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="containerimage-py documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="image.html" class="btn btn-neutral float-right" title="image package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, IBM Corporation.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
