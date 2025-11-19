@@ -1,8 +1,10 @@
 from datetime import datetime, timezone
 from image.auth import AUTH
 from image.byteunit import ByteUnit
+from image.client import ContainerImageRegistryClient
 from image.config import ContainerImageConfig
 from image.containerimage import ContainerImage
+from image.errors import ContainerImageError
 from image.manifest import ContainerImageManifest
 from image.manifestlist import ContainerImageManifestList
 from image.mediatypes import *
@@ -11,6 +13,7 @@ from lint.linter import Linter
 from lint.result import LintResult
 from lint.rule import LintRule, DEFAULT_LINT_RULE_CONFIG
 from lint.status import LintStatus
+from typing import Union
 
 DEFAULT_CONTAINER_IMAGE_LINTER_CONFIG = LinterConfig({
     "ManifestListSupportsRequiredPlatforms": {
@@ -100,36 +103,51 @@ class ContainerImageManifestLinter(
     pass
 
 class ManifestListSupportsRequiredPlatforms(
-        LintRule[ContainerImageManifestList]
+        LintRule[Union[ContainerImageManifestList, ContainerImageManifest]]
     ):
     """
     A lint rule ensuring a manifest list supports the required platforms
     """
     def lint(
             self,
-            artifact: ContainerImageManifestList,
-            config: LintRuleConfig=DEFAULT_LINT_RULE_CONFIG
+            artifact: Union[ContainerImageManifestList, ContainerImageManifest],
+            config: LintRuleConfig=DEFAULT_LINT_RULE_CONFIG,
+            **kwargs
         ) -> LintResult:
         """
         Implementation of the ManifestListSupportsRequiredPlatforms lint rule
         """
         try:
             required = config.config.get("platforms", [ "linux/amd64" ])
-            platforms = set(
-                str(entry.get_platform()) for entry in artifact.get_entries()
-            )
+
+            # The image is actually a manifest list
+            if isinstance(artifact, ContainerImageManifestList):
+                image_type = "manifest list"
+                platforms = set(
+                    str(entry.get_platform()) for entry in artifact.get_entries()
+                )
+            else:
+                # The image was built as a manifest
+                image_type = "manifest"
+                manifest_config = kwargs.get("manifest_config")
+                if not isinstance(manifest_config, ContainerImageConfig):
+                    raise ContainerImageError(
+                        "manifest list lint rule attempted to lint a manifest " + \
+                        f"and no manifest config was given, got {type(manifest_config).__name__}"
+                    )
+                platforms = set([str(manifest_config.get_platform())])
             missing = list(set(required).difference(platforms))
             if len(missing) > 0:
                 return LintResult(
                     status=LintStatus.ERROR,
-                    message=f"({self.name()}) manifest list does not support " + \
-                        "the following required platforms: " + \
+                    message=f"({self.name()}) {image_type} does not " + \
+                        "support the following required platforms: " + \
                         str([ str(platform) for platform in missing ])
                 )
             return LintResult(
                 status=LintStatus.INFO,
                 message=f"({self.name()}) " + \
-                    "manifest list supports all required platforms"
+                    f"{image_type} supports all required platforms"
             )
         except Exception as e:
             return LintResult(
@@ -138,7 +156,7 @@ class ManifestListSupportsRequiredPlatforms(
             )
 
 class ManifestListSupportsRequiredMediaTypes(
-        LintRule[ContainerImageManifestList]
+        LintRule[Union[ContainerImageManifestList, ContainerImageManifest]]
     ):
     """
     A lint rule ensuring a manifest list and its manifests support the required
@@ -146,7 +164,7 @@ class ManifestListSupportsRequiredMediaTypes(
     """
     def lint(
             self,
-            artifact: ContainerImageManifestList,
+            artifact: Union[ContainerImageManifestList, ContainerImageManifest],
             config: LintRuleConfig=DEFAULT_LINT_RULE_CONFIG,
             **kwargs
         ) -> LintResult:
@@ -154,41 +172,69 @@ class ManifestListSupportsRequiredMediaTypes(
         Implementation of the ManifestListSupportsRequiredMediaTypes lint rule
         """
         try:
-            list_media_type = artifact.get_media_type()
-            expected_list_media_types = config.config.get(
-                "manifest-list-media-types",
+            allow_single_arch = config.config.get(
+                "allow-single-arch",
+                True
+            )
+            expected_manifest_media_types = config.config.get(
+                "manifest-media-types",
                 [
-                    DOCKER_V2S2_LIST_MEDIA_TYPE,
-                    OCI_INDEX_MEDIA_TYPE
+                    DOCKER_V2S2_MEDIA_TYPE,
+                    OCI_MANIFEST_MEDIA_TYPE
                 ]
             )
-            if not list_media_type in expected_list_media_types:
-                return LintResult(
-                    status=LintStatus.ERROR,
-                    message=f"({self.name()}) " + \
-                        f"manifest list has mediaType {list_media_type}, " + \
-                        f"expected one of {str(expected_list_media_types)}"
-                )
-            for entry in artifact.get_entries():
-                manifest_media_type = entry.get_media_type()
-                expected_media_types = config.config.get(
-                    "manifest-media-types",
+
+            # The image is actually a manifest list
+            if isinstance(artifact, ContainerImageManifestList):
+                list_media_type = artifact.get_media_type()
+                expected_list_media_types = config.config.get(
+                    "manifest-list-media-types",
                     [
-                        DOCKER_V2S2_MEDIA_TYPE,
-                        OCI_MANIFEST_MEDIA_TYPE
+                        DOCKER_V2S2_LIST_MEDIA_TYPE,
+                        OCI_INDEX_MEDIA_TYPE
                     ]
                 )
-                if not manifest_media_type in expected_media_types:
+                if not list_media_type in expected_list_media_types:
                     return LintResult(
                         status=LintStatus.ERROR,
                         message=f"({self.name()}) " + \
-                            f"manifest {entry.get_platform()} has mediaType " + \
-                            f"{manifest_media_type}, expected one of " + \
-                            str(expected_media_types)
+                            f"manifest list has mediaType {list_media_type}, " + \
+                            f"expected one of {str(expected_list_media_types)}"
                     )
+                for entry in artifact.get_entries():
+                    manifest_media_type = entry.get_media_type()
+                    if not manifest_media_type in expected_manifest_media_types:
+                        return LintResult(
+                            status=LintStatus.ERROR,
+                            message=f"({self.name()}) " + \
+                                f"manifest {entry.get_platform()} has mediaType " + \
+                                f"{manifest_media_type}, expected one of " + \
+                                str(expected_manifest_media_types)
+                        )
+                return LintResult(
+                    message=f"({self.name()}) " + \
+                        "manifest list and manifests support expected mediaTypes"
+                )
+            
+            # The image was built as a manifest
+            if not allow_single_arch:
+                return LintResult(
+                    status=LintStatus.ERROR,
+                    message=f"({self.name()}) " + \
+                        f"got manifest, but expected manifest list"
+                )
+            manifest_media_type = artifact.get_media_type()
+            if not manifest_media_type in expected_manifest_media_types:
+                return LintResult(
+                    status=LintStatus.ERROR,
+                    message=f"({self.name()}) " + \
+                        f"manifest has mediaType {manifest_media_type} " + \
+                        f", expected one of {str(expected_manifest_media_types)}"
+                )
             return LintResult(
+                status=LintStatus.INFO,
                 message=f"({self.name()}) " + \
-                    "manifest list and manifests support expected maediaTypes"
+                    "manifest supports expected mediaTypes"
             )
         except Exception as e:
             return LintResult(
@@ -197,10 +243,12 @@ class ManifestListSupportsRequiredMediaTypes(
             )
 
 class ContainerImageManifestListLinter(
-        Linter[ContainerImageManifestList]
+        Linter[Union[ContainerImageManifestList, ContainerImageManifest]]
     ):
     """
-    A linter for container image manifest lists
+    A linter for container image manifest lists. Can apply the same checks to
+    manifests in case a manifest is being built when a manifest list should be
+    built.
     """
     pass
 
@@ -411,6 +459,13 @@ class ContainerImageLinter(
                 ref=artifact,
                 manifest=manifest,
                 auth=auth
+            )
+            results.extend(
+                self.manifest_list_linter.lint(
+                    manifest,
+                    config,
+                    manifest_config=img_config
+                )
             )
             results.extend(self.config_linter.lint(img_config, config))
         
